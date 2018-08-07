@@ -1,0 +1,42 @@
+{
+  "name": "canvas-sketch-util",
+  "version": "1.0.0",
+  "description": "Utilities for sketching in Canvas, WebGL and generative art",
+  "main": "index.js",
+  "license": "MIT",
+  "author": {
+    "name": "Matt DesLauriers",
+    "email": "dave.des@gmail.com",
+    "url": "https://github.com/mattdesl"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "buble": "^0.19.3",
+    "concat-stream": "^1.6.2",
+    "duplexer2": "^0.1.4",
+    "globby": "^8.0.1",
+    "mkdirp": "^0.5.1",
+    "through2": "^2.0.3"
+  },
+  "scripts": {},
+  "keywords": [
+    "genart",
+    "generative",
+    "art",
+    "canvas",
+    "sketch",
+    "code",
+    "canvas-sketch",
+    "geom",
+    "geometry",
+    "random"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/mattdesl/canvas-sketch-util.git"
+  },
+  "homepage": "https://github.com/mattdesl/canvas-sketch-util",
+  "bugs": {
+    "url": "https://github.com/mattdesl/canvas-sketch-util/issues"
+  }
+}
