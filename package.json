@@ -15,7 +15,6 @@
     "simplex-noise": "^2.4.0"
   },
   "devDependencies": {
-    "canvas-sketch": "0.0.17",
     "eslint": "^5.3.0",
     "eslint-plugin-node": "7.0.1",
     "semistandard": "^12.0.1",
