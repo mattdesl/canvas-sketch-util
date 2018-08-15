@@ -52,7 +52,7 @@ console.log(seeded.shuffle([ 'a', 'b', 'c' ]));
 The following modules have been implemented:
 
 - [`math`](./docs/math.md) - Math & interpolation utilities
-- [`random`](./docs/random.ms) - A random number generator
+- [`random`](./docs/random.md) - A random number generator
 
 The following are planned but not yet implemented:
 
