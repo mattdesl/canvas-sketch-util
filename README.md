@@ -17,6 +17,7 @@ console.log(math.clamp(1.25, 0, 1));
 // 1
 ```
 
+Or by using destructuring to grab only a select few functions:
 
 ```js
 const { fract, lerp } = require('canvas-sketch-util/math');
@@ -50,8 +51,8 @@ console.log(seeded.shuffle([ 'a', 'b', 'c' ]));
 
 The following modules have been implemented:
 
-- `math` - Math & interpolation utilities
-- `random` - A random number generator
+- [`math`](./docs/math.md) - Math & interpolation utilities
+- [`random`](./docs/random.ms) - A random number generator
 
 The following are planned but not yet implemented:
 
@@ -72,7 +73,9 @@ npm install canvas-sketch-util --save
 
 ## Docs
 
-For full API documentation, see [Documentation](./docs).
+For full API documentation, see [Documentation](./docs/README.md).
+
+You can also see a few examples in [./test/exampels.js](./test/examples.js).
 
 ## License
 
