@@ -21,4 +21,4 @@ const { fract, mod, clamp } = require('canvas-sketch-util/math');
 ### Modules
 
 - [`math`](./math.md) - Math & interpolation utilities
-- [`random`](./random.ms) - A random number generator
+- [`random`](./random.md) - A random number generator
