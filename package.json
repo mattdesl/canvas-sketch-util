@@ -10,6 +10,7 @@
     "url": "https://github.com/mattdesl"
   },
   "dependencies": {
+    "convert-length": "^1.0.1",
     "defined": "^1.0.0",
     "seed-random": "^2.2.0",
     "simplex-noise": "^2.4.0"
