@@ -32,6 +32,8 @@ console.log(lerp(0, 100, 0.5));
 - [lerpFrames](#lerpFrames)
 - [linspace](#linspace)
 - [smoothstep](#smoothstep)
+- [damp](#damp)
+- [dampArray](#dampArray)
 - [mapRange](#mapRange)
 - [expand2D](#expand2D)
 - [expand3D](#expand3D)
@@ -169,6 +171,24 @@ console.log(linspace(5, true));
 ### `v = smoothstep(edge0, edge1, x)`
 
 Performs smooth Hermite interpolation between 0 and 1 when `edge0 < x < edge1`. This is useful in cases where a threshold function with a smooth transition is desired.
+
+<a name="damp"></a>
+
+### `n = damp(a, b, lambda, dt)`
+
+Smoothly interpolate a number from `a` toward `b` using the `lambda` power and `dt` (delta time typically in seconds) to maintain frame rate independent movement. For details, see [Frame Rate Independent Damping Using Lerp](http://www.rorydriscoll.com/2016/03/07/frame-rate-independent-damping-using-lerp/).
+
+A higher `lambda` value will make the movement more sudden, and a lower value will make the movement more gradual.
+
+<a name="dampArray"></a>
+
+### `vec = dampArray(a, b, lambda, dt, out = [])`
+
+Smoothly interpolate a vector array from `a` toward `b` using the `lambda` power and `dt` (delta time typically in seconds) to maintain frame rate independent movement. For details, see [Frame Rate Independent Damping Using Lerp](http://www.rorydriscoll.com/2016/03/07/frame-rate-independent-damping-using-lerp/).
+
+A higher `lambda` value will make the movement more sudden, and a lower value will make the movement more gradual.
+
+The returned output is stored in `out` array, or if no parameter is given, a new array is created.
 
 <a name="mapRange"></a>
 

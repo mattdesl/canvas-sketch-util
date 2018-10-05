@@ -75,7 +75,7 @@ test('lerps', t => {
   const array = [];
   const result = math.lerpArray([ 0, 0 ], [ 10, 10 ], 0.25, array);
   t.deepEqual(result, [ 2.5, 2.5 ]);
-  t.equal(result, array);
+  t.strictEqual(result, array);
   t.deepEqual(math.lerpArray([ 0, 0 ], [ 10, 10 ], 0.5), [ 5, 5 ]);
 
   t.equal(math.inverseLerp(20, 40, 40), 1);
@@ -106,6 +106,19 @@ test('clamp', t => {
 
 test('smoothstep', t => {
   t.equal(math.smoothstep(0.0, 0.5, 0.25), 0.5);
+  t.end();
+});
+
+test('damp', t => {
+  t.equal(math.damp(0, 1, 20, 0.1).toFixed(2), '0.86');
+  t.equal(math.damp(0, 1, 20, 0.2).toFixed(2), '0.98');
+  t.equal(math.damp(1, 0, 20, 0.2).toFixed(2), '0.02');
+  t.equal(math.damp(0, 1, 40, 0.1).toFixed(2), '0.98');
+  t.deepEqual(math.dampArray([ 2, 0 ], [ 1, 2 ], 20, 0.2).map(n => n.toFixed(2)), [ '1.02', '1.96' ]);
+  t.deepEqual(math.dampArray([ 0.25, 0.5 ], [ 1, 1 ], 5, 0.2).map(n => n.toFixed(2)), [ '0.72', '0.82' ]);
+  const shared = [];
+  t.strictEqual(math.dampArray([ 0.25, 0.5 ], [ 1, 1 ], 5, 0.2, shared), shared);
+  t.deepEqual(shared.map(n => n.toFixed(2)), [ '0.72', '0.82' ]);
   t.end();
 });
 

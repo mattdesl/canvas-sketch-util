@@ -157,12 +157,24 @@ function wrap (value, from, to) {
 
 // Specific function from Unity / ofMath, not sure its needed?
 // function lerpWrap (a, b, t, min, max) {
-//   return wrap(a + wrap(b - a, min, max) * t, min, max);
+//   return wrap(a + wrap(b - a, min, max) * t, min, max)
 // }
 
 function pingPong (t, length) {
   t = mod(t, length * 2);
   return length - Math.abs(t - length);
+}
+
+function damp (a, b, lambda, dt) {
+  return lerp(a, b, 1 - Math.exp(-lambda * dt));
+}
+
+function dampArray (a, b, lambda, dt, out) {
+  out = out || [];
+  for (var i = 0; i < a.length; i++) {
+    out[i] = damp(a[i], b[i], lambda, dt);
+  }
+  return out;
 }
 
 function mapRange (value, inputMin, inputMax, outputMin, outputMax, clamp) {
@@ -201,6 +213,8 @@ module.exports = {
   clamp: clamp,
   clamp01: clamp01,
   smoothstep: smoothstep,
+  damp,
+  dampArray,
   mapRange: mapRange,
   expand2D: expandVector(2),
   expand3D: expandVector(3),
