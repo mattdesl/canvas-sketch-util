@@ -104,27 +104,35 @@ Produce a random value between 0 (exlusive) and 1 (exclusive).
 
 <a name="noise1D"></a>
 
-### `n = random.noise1D(x)`
+### `n = random.noise1D(x, frequency = 1, amplitude = 1)`
 
-Produces random simplex noise with the `simplex-noise` module. This is equivalent to `noise2D(x, 0)`.
+Produces 1-dimensional random simplex noise with the `simplex-noise` module. This is equivalent to `noise2D(x, 0)`.
+
+Optionally you can specify the `frequency` (which multiplies all coordinates by that value) and `amplitude` (which multiplies the output result by that value) of the noise signal.
 
 <a name="noise2D"></a>
 
-### `n = random.noise2D(x, y)`
+### `n = random.noise2D(x, y, frequency = 1, amplitude = 1)`
 
-Produces random simplex noise with the `simplex-noise` module.
+Produces 2-dimensional random simplex noise with the `simplex-noise` module.
+
+Optionally you can specify the `frequency` (which multiplies all coordinates by that value) and `amplitude` (which multiplies the output result by that value) of the noise signal.
 
 <a name="noise3D"></a>
 
-### `n = random.noise3D(x, y, z)`
+### `n = random.noise3D(x, y, z, frequency = 1, amplitude = 1)`
 
-Produces random simplex noise with the `simplex-noise` module.
+Produces 3-dimensional random simplex noise with the `simplex-noise` module.
+
+Optionally you can specify the `frequency` (which multiplies all coordinates by that value) and `amplitude` (which multiplies the output result by that value) of the noise signal.
 
 <a name="noise4D"></a>
 
-### `n = random.noise4D(x, y, z, w)`
+### `n = random.noise4D(x, y, z, w, frequency = 1, amplitude = 1)`
 
-Produces random simplex noise with the `simplex-noise` module.
+Produces 4-dimensional random simplex noise with the `simplex-noise` module.
+
+Optionally you can specify the `frequency` (which multiplies all coordinates by that value) and `amplitude` (which multiplies the output result by that value) of the noise signal.
 
 <a name="permuteNoise"></a>
 
