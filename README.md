@@ -53,13 +53,13 @@ The following modules have been implemented:
 
 - [`math`](./docs/math.md) - Math & interpolation utilities
 - [`random`](./docs/random.md) - A random number generator
+- [`geometry`](./docs/geometry.md) - Utilities for geoemtry & shapes
+- [`penplot`](./docs/penplot.md) - Utilities for working with pen plotters (e.g. AxiDraw)
 
 The following are planned but not yet implemented:
 
-- `geom` - Geometry, intersection & collision utilities
 - `tween` - Tweening, easing & animation utilities
 - `color` - Color and color space utilities
-- `penplot` - AxiDraw and SVG-based pen plotter utilities
 
 And more to come...
 

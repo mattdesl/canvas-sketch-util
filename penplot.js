@@ -3,27 +3,7 @@ var convert = require('convert-length');
 
 var DEFAULT_PEN_THICKNESS = 0.03;
 var DEFAULT_PEN_THICKNESS_UNIT = 'cm';
-
-function computePolylineBounds (polylines) {
-  var minX = Infinity;
-  var minY = Infinity;
-  var maxX = -Infinity;
-  var maxY = -Infinity;
-  for (var i = 0; i < polylines.length; i++) {
-    var path = polylines[i];
-    for (var p = 0; p < path.length; p++) {
-      var point = path[p];
-      if (point[0] < minX) minX = point[0];
-      if (point[1] < minY) minY = point[1];
-      if (point[0] > maxX) maxX = point[0];
-      if (point[1] > maxY) maxY = point[1];
-    }
-  }
-  return {
-    min: [ minX, minY ],
-    max: [ maxX, maxY ]
-  };
-}
+var DEFAULT_PIXELS_PER_INCH = 90;
 
 module.exports.polylinesToSVG = function polylinesToSVG (polylines, opt) {
   opt = opt || {};
@@ -42,7 +22,7 @@ module.exports.polylinesToSVG = function polylinesToSVG (polylines, opt) {
   var convertOptions = {
     roundPixel: false,
     precision: defined(opt.precision, 5),
-    pixelsPerInch: 90
+    pixelsPerInch: DEFAULT_PIXELS_PER_INCH
   };
   polylines.forEach(function (line) {
     line.forEach(function (point, j) {
@@ -66,55 +46,71 @@ module.exports.polylinesToSVG = function polylinesToSVG (polylines, opt) {
     lineWidth = convert(DEFAULT_PEN_THICKNESS, DEFAULT_PEN_THICKNESS_UNIT, units, convertOptions).toString();
   }
 
-  return `<?xml version="1.0" standalone="no"?>
-  <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" 
-    "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-  <svg width="${width}${units}" height="${height}${units}"
-       xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 ${viewWidth} ${viewHeight}">
-   <g>
-     <path d="${svgPath}" fill="${fillStyle}" stroke="${strokeStyle}" stroke-width="${lineWidth}${units}" />
-   </g>
-</svg>`;
+  return [
+    '<?xml version="1.0" standalone="no"?>',
+    '  <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" ',
+    '      "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">',
+    '  <svg width="' + width + units + '" height="' + height + units + '"',
+    '      xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 ' + viewWidth + ' ' + viewHeight + '">',
+    '    <g>',
+    '      <path d="' + svgPath + '" fill="' + fillStyle + '" stroke="' + strokeStyle + '" stroke-width="' + lineWidth + units + '" />',
+    '    </g>',
+    '</svg>'
+  ].join('\n');
 };
 
-module.exports.exportPolylines = function (polylines, opt) {
-  return {
-    data: module.exports.polylinesToSVG(polylines, opt),
-    extension: '.svg'
-  };
-};
+module.exports.renderPolylines = function (polylines, opt) {
+  opt = opt || {};
 
-var TO_PX = 35.43307;
+  var context = opt.context;
+  if (!context) throw new Error('Must specify "context" options');
 
-module.exports.toSVG = function polylinesToSVG (polylines, opt = {}) {
-  const dimensions = opt.dimensions;
-  if (!dimensions) throw new TypeError('must specify dimensions currently');
-  const decimalPlaces = 5;
+  var units = opt.units || 'px';
 
-  let commands = [];
-  polylines.forEach(line => {
-    line.forEach((point, j) => {
-      const type = (j === 0) ? 'M' : 'L';
-      const x = (TO_PX * point[0]).toFixed(decimalPlaces);
-      const y = (TO_PX * point[1]).toFixed(decimalPlaces);
-      commands.push(`${type}${x} ${y}`);
+  var width = opt.width;
+  var height = opt.height;
+  if (typeof width === 'undefined' || typeof height === 'undefined') {
+    throw new Error('Must specify "width" and "height" options');
+  }
+
+  // Choose a default line width based on a relatively fine-tip pen
+  var lineWidth = opt.lineWidth;
+  if (typeof lineWidth === 'undefined') {
+    // Convert to user units
+    lineWidth = convert(DEFAULT_PEN_THICKNESS, DEFAULT_PEN_THICKNESS_UNIT, units, {
+      roundPixel: false,
+      pixelsPerInch: DEFAULT_PIXELS_PER_INCH
     });
+  }
+
+  // Clear canvas
+  context.clearRect(0, 0, width, height);
+
+  // Fill with white
+  context.fillStyle = opt.background || 'white';
+  context.fillRect(0, 0, width, height);
+
+  // Draw lines
+  polylines.forEach(function (points) {
+    context.beginPath();
+    points.forEach(function (p) {
+      context.lineTo(p[0], p[1]);
+    });
+    context.strokeStyle = opt.strokeStyle || 'black';
+    context.lineWidth = lineWidth;
+    context.lineJoin = opt.lineJoin || 'round';
+    context.lineCap = opt.lineCap || 'round';
+    context.stroke();
   });
 
-  const svgPath = commands.join(' ');
-  const viewWidth = (dimensions[0] * TO_PX).toFixed(decimalPlaces);
-  const viewHeight = (dimensions[1] * TO_PX).toFixed(decimalPlaces);
-  const fillStyle = opt.fillStyle || 'none';
-  const strokeStyle = opt.strokeStyle || 'black';
-  const lineWidth = defined(opt.lineWidth, DEFAULT_PEN_THICKNESS);
-
-  return `<?xml version="1.0" standalone="no"?>
-  <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" 
-    "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-  <svg width="${dimensions[0]}cm" height="${dimensions[1]}cm"
-       xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 ${viewWidth} ${viewHeight}">
-   <g>
-     <path d="${svgPath}" fill="${fillStyle}" stroke="${strokeStyle}" stroke-width="${lineWidth}cm" />
-   </g>
-</svg>`;
+  // Save layers
+  return [
+    // Export PNG as first layer
+    context.canvas,
+    // Export SVG for pen plotter as second layer
+    {
+      data: module.exports.polylinesToSVG(polylines, opt),
+      extension: '.svg'
+    }
+  ];
 };
