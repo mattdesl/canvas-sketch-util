@@ -85,30 +85,47 @@ function createRandom (defaultSeed) {
     noiseGenerator = createNoise();
   }
 
-  function noise1D (x) {
+  function noise1D (x, frequency, amplitude) {
     if (!isFinite(x)) throw new TypeError('x component for noise() must be finite');
-    return noiseGenerator.noise2D(x, 0);
+    frequency = defined(frequency, 1);
+    amplitude = defined(amplitude, 1);
+    return amplitude * noiseGenerator.noise2D(x * frequency, 0);
   }
 
-  function noise2D (x, y) {
+  function noise2D (x, y, frequency, amplitude) {
     if (!isFinite(x)) throw new TypeError('x component for noise() must be finite');
     if (!isFinite(y)) throw new TypeError('y component for noise() must be finite');
-    return noiseGenerator.noise2D(x, y);
+    frequency = defined(frequency, 1);
+    amplitude = defined(amplitude, 1);
+    return amplitude * noiseGenerator.noise2D(x * frequency, y * frequency);
   }
 
-  function noise3D (x, y, z) {
+  function noise3D (x, y, z, frequency, amplitude) {
     if (!isFinite(x)) throw new TypeError('x component for noise() must be finite');
     if (!isFinite(y)) throw new TypeError('y component for noise() must be finite');
     if (!isFinite(z)) throw new TypeError('z component for noise() must be finite');
-    return noiseGenerator.noise3D(x, y, z);
+    frequency = defined(frequency, 1);
+    amplitude = defined(amplitude, 1);
+    return amplitude * noiseGenerator.noise3D(
+      x * frequency,
+      y * frequency,
+      z * frequency
+    );
   }
 
-  function noise4D (x, y, z, w) {
+  function noise4D (x, y, z, w, frequency, amplitude) {
     if (!isFinite(x)) throw new TypeError('x component for noise() must be finite');
     if (!isFinite(y)) throw new TypeError('y component for noise() must be finite');
     if (!isFinite(z)) throw new TypeError('z component for noise() must be finite');
     if (!isFinite(w)) throw new TypeError('w component for noise() must be finite');
-    return noiseGenerator.noise4D(x, y, z, w);
+    frequency = defined(frequency, 1);
+    amplitude = defined(amplitude, 1);
+    return amplitude * noiseGenerator.noise4D(
+      x * frequency,
+      y * frequency,
+      z * frequency,
+      w * frequency
+    );
   }
 
   function sign () {
