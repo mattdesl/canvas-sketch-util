@@ -55,6 +55,7 @@ The following modules have been implemented:
 - [`random`](./docs/random.md) - A random number generator
 - [`geometry`](./docs/geometry.md) - Utilities for geoemtry & shapes
 - [`penplot`](./docs/penplot.md) - Utilities for working with pen plotters (e.g. AxiDraw)
+- [`shader`](./docs/shader.md) - A full-screen GLSL shader utility
 
 The following are planned but not yet implemented:
 
