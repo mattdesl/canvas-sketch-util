@@ -28,12 +28,14 @@ function createShader (opt) {
 
   // Wire up user uniforms nicely
   var uniformsMap = opt.uniforms || {};
-  var uniforms = {};
+  var uniforms = Object.assign({}, uniformsMap);
   Object.keys(uniformsMap).forEach(function (key) {
     var fn = uniformsMap[key];
-    uniforms[key] = function (state, props, batchID) {
-      return fn.call(uniformsMap, props, batchID);
-    };
+    if (typeof fn === 'function') {
+      uniforms[key] = function (state, props, batchID) {
+        return fn.call(uniformsMap, props, batchID);
+      };
+    }
   });
 
   // Get the drawing command
