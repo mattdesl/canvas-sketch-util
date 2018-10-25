@@ -26,15 +26,43 @@ function createShader (opt) {
   // A mesh for a flat plane
   var quad = createQuad();
 
+  var textureMap = new Map();
+
   // Wire up user uniforms nicely
   var uniformsMap = opt.uniforms || {};
   var uniforms = Object.assign({}, uniformsMap);
   Object.keys(uniformsMap).forEach(function (key) {
-    var fn = uniformsMap[key];
-    if (typeof fn === 'function') {
+    var value = uniformsMap[key];
+    if (typeof value === 'function') {
       uniforms[key] = function (state, props, batchID) {
-        return fn.call(uniformsMap, props, batchID);
+        var result = value.call(uniformsMap, props, batchID);
+        // If user is using a function to wrap an image,
+        // then we need to make sure we re-upload to same GL texture
+        if (isTextureLike(result)) {
+          if (textureMap.has(value)) {
+            // Texture is already created, re-upload
+            var prevTex = textureMap.get(value);
+            prevTex(result);
+
+            console.log('reup tex');
+
+            // Return the texture
+            result = prevTex;
+          } else {
+            // Creating the texture for the first time
+            var texture = regl.texture(result);
+            textureMap.set(value, texture);
+
+            // Return the texture, not the image
+            result = texture;
+          }
+        }
+        return result;
       };
+    } else if (isTextureLike(value)) {
+      uniforms[key] = regl.texture(value);
+    } else {
+      uniforms[key] = value;
     }
   });
 
@@ -95,6 +123,8 @@ function createShader (opt) {
       gl.flush();
     },
     unload: function () {
+      // Remove GL texture mappings
+      textureMap.clear();
       // Unload the current regl instance
       regl.destroy();
     }
@@ -153,3 +183,16 @@ function createShader (opt) {
     }
   }
 }
+
+function isTextureLike (data) {
+  return data && !Array.isArray(data) && typeof data === 'object';
+}
+
+// function isDOMImage (data) {
+//   /* global HTMLCanvasElement, ImageData, HTMLImageElement, HTMLVideoElement */
+//   return (typeof HTMLCanvasElement !== 'undefined' && data instanceof HTMLCanvasElement) ||
+//     (typeof ImageData !== 'undefined' && data instanceof ImageData) ||
+//     (typeof HTMLImageElement !== 'undefined' && data instanceof HTMLImageElement) ||
+//     (typeof HTMLVideoElement !== 'undefined' && data instanceof HTMLVideoElement) ||
+//     typeof data === 'object' && data;
+// }

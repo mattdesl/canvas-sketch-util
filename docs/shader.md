@@ -75,6 +75,8 @@ Creates a full-screen GLSL shader renderer with `opt` settings. The following op
 - `uniforms` a map of named uniforms
   - You can specify a constant value like `{ alpha: 0.5 }` (float) or `{ position: [ 0, 0.5 ] }` (vec2)
 
+  - If you want to use a `sampler2D`, you should pass an image-like object, such as a `<image>` tag, ndarray, regl texture object descriptor, or Canvas.
+
   - Or, you can specify a function to derive a value from the current `props`, such as `({ time }) => time`
 
 The default `frag` and `vert` will use a simple black shader, which passes along the UV coordinates as `varying vec2 vUv`.
@@ -111,11 +113,12 @@ void main () {
 
 #### Advanced Example
 
-Another example without directly returning the shader result.
+Another example without directly returning the shader result, and also showing image loading.
 
 ```js
 const canvasSketch = require('canvas-sketch');
 const createShader = require('canvas-sketch-util/shader');
+const loadAsset = require('load-asset');
 
 // Require a GLSL file for nicer editor syntax highlighting
 const frag = require('./mouse.glsl');
@@ -126,7 +129,8 @@ const settings = {
   animate: true
 };
 
-const sketch = ({ gl }) => {
+const sketch = async ({ gl }) => {
+  const image = await loadAsset('image.png');
   const mouse = [ 0, 0 ];
 
   // Create a mouse listener
@@ -144,6 +148,8 @@ const sketch = ({ gl }) => {
     frag,
     // Specify additional uniforms to pass down to the shaders
     uniforms: {
+      // Pass down a sampler2D image
+      map: image,
       // Expose props from canvas-sketch
       time: ({ time }) => time,
       // Expose additional mouse uniform
