@@ -96,7 +96,7 @@ module.exports.renderPolylines = function (polylines, opt) {
     points.forEach(function (p) {
       context.lineTo(p[0], p[1]);
     });
-    context.strokeStyle = opt.strokeStyle || 'black';
+    context.strokeStyle = opt.foreground || opt.strokeStyle || 'black';
     context.lineWidth = lineWidth;
     context.lineJoin = opt.lineJoin || 'round';
     context.lineCap = opt.lineCap || 'round';

@@ -94,8 +94,7 @@ const sketch = ({ width, height }) => {
   // ...
   return props => renderPolylines(lines, {
     ...props,
-    lineWidth: 0.05,
-    strokeStyle: 'red'
+    lineWidth: 0.05
   });
 };
 ```
@@ -106,7 +105,8 @@ Full list of expected props:
 - `units` The units of the artwork
 - `width` (required) the width of the artwork in `units`
 - `height` (required) the width of the artwork in `units`
-- `background` The background color for 2D canvas, default `'white'`
+- `background` The background `fillStyle` for 2D canvas, default `'white'`
+- `foreground` The foreground `strokeStyle` applied only to the 2D canvas, defaults to `'black'` (use this if you wish to have a white stroke on black PNG, but still a black stroke SVG)
 - Other properties passed into `polylinesToSVG` function
 
 ## 
