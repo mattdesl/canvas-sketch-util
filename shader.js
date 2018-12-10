@@ -44,8 +44,6 @@ function createShader (opt) {
             var prevTex = textureMap.get(value);
             prevTex(result);
 
-            console.log('reup tex');
-
             // Return the texture
             result = prevTex;
           } else {
@@ -67,9 +65,9 @@ function createShader (opt) {
   });
 
   // Get the drawing command
-  var drawQuad;
+  var drawQuadCommand;
   try {
-    drawQuad = createDrawQuad();
+    drawQuadCommand = createDrawQuad();
   } catch (err) {
     handleError(err);
   }
@@ -106,33 +104,52 @@ function createShader (opt) {
         });
       }
 
-      // Draw generative / shader art
-      if (drawQuad) {
-        try {
-          drawQuad(props);
-        } catch (err) {
-          if (handleError(err)) {
-            if (props == null) {
-              console.warn('Warning: shader.render() is not called with any "props" parameter');
-            }
-          }
-        }
-      }
+      // Submit draw command
+      drawQuad(props);
 
       // Flush pending GL calls for this frame
       gl.flush();
     },
+    regl,
+    drawQuad,
     unload: function () {
       // Remove GL texture mappings
       textureMap.clear();
       // Unload the current regl instance
+      // TODO: We should probably also destroy textures created from this module!
       regl.destroy();
     }
   };
 
+  // A user-friendly draw command that spits out errors
+  function drawQuad (props) {
+    props = props || {};
+    // Draw generative / shader art
+    if (drawQuadCommand) {
+      try {
+        drawQuadCommand(props);
+      } catch (err) {
+        if (handleError(err)) {
+          if (props == null) {
+            console.warn('Warning: shader.render() is not called with any "props" parameter');
+          }
+        }
+      }
+    }
+  }
+
   // Draw command
   function createDrawQuad () {
     return regl({
+      scissor: opt.scissor ? {
+        enable: true,
+        box: {
+          x: regl.prop('scissorX'),
+          y: regl.prop('scissorY'),
+          width: regl.prop('scissorWidth'),
+          height: regl.prop('scissorHeight')
+        }
+      } : false,
       // Pass down props from javascript
       uniforms: uniforms,
       // Fall back to a simple fragment shader
@@ -155,7 +172,7 @@ function createShader (opt) {
         '}'
       ].join('\n'),
       // Setup transparency blending
-      blend: {
+      blend: opt.blend !== false ? {
         enable: true,
         func: {
           srcRGB: 'src alpha',
@@ -163,7 +180,7 @@ function createShader (opt) {
           dstRGB: 'one minus src alpha',
           dstAlpha: 1
         }
-      },
+      } : undefined,
       // Send mesh vertex attributes to shader
       attributes: {
         position: quad.positions
@@ -187,12 +204,3 @@ function createShader (opt) {
 function isTextureLike (data) {
   return data && !Array.isArray(data) && typeof data === 'object';
 }
-
-// function isDOMImage (data) {
-//   /* global HTMLCanvasElement, ImageData, HTMLImageElement, HTMLVideoElement */
-//   return (typeof HTMLCanvasElement !== 'undefined' && data instanceof HTMLCanvasElement) ||
-//     (typeof ImageData !== 'undefined' && data instanceof ImageData) ||
-//     (typeof HTMLImageElement !== 'undefined' && data instanceof HTMLImageElement) ||
-//     (typeof HTMLVideoElement !== 'undefined' && data instanceof HTMLVideoElement) ||
-//     typeof data === 'object' && data;
-// }

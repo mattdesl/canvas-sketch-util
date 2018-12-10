@@ -6,6 +6,8 @@
 
 A utility to quickly bootstrap a full-screen GLSL quad shader, similar to [ShaderToy](https://www.shadertoy.com/) but with only minimal features.
 
+This uses [REGL](https://github.com/regl-project/regl) under the hood.
+
 > :bulb: This utility is best used alongside [canvas-sketch](https://github.com/mattdesl/canvas-sketch) and its CLI, although it should also work in other environments.
 
 ### Example
@@ -60,7 +62,7 @@ Also see [Advanced Example](#advanced-example).
 ### Functions
 
 
-### `{ render, unload } = createShader(opt)`
+### `shader = createShader(opt)`
 
 Creates a full-screen GLSL shader renderer with `opt` settings. The following options can be used:
 
@@ -78,10 +80,30 @@ Creates a full-screen GLSL shader renderer with `opt` settings. The following op
   - If you want to use a `sampler2D`, you should pass an image-like object, such as a `<image>` tag, ndarray, regl texture object descriptor, or Canvas.
 
   - Or, you can specify a function to derive a value from the current `props`, such as `({ time }) => time`
+- `extensions` a list of WebGL extensions to enable for this shader
+- `optionalExtensions` a list of optional WebGL extensions to attempt to enable for this shader
+- `blend` (default true) enable blending with background, set to `false` to disable entirely
+- `scissor` if true, scissor testing will be enabled and the props `scissorX, scissorY, scissorWidth, scissorHeight` will be expected to be passed through to the render function
 
 The default `frag` and `vert` will use a simple black shader, which passes along the UV coordinates as `varying vec2 vUv`.
 
 The returned `render(props)` function can be used to draw the shader to the context, or `unload()` can be used to destroy the shader.
+
+### `shader.render(props)`
+
+The resulting shader has a `render()` function which will poll the GL state, clear the backbuffer (if needed), draw a full-screen quad, and then flush the GL state.
+
+### `shader.unload()`
+
+Destroys the shader and any GL memory associated with it.
+
+### `shader.drawQuad(props)`
+
+This is a low-level function that will draw the full-screen quad. This does not do any GL polling/flushing or buffer clearing. This can be used, for example, to implement tiled rendering when `scissor` is enabled, by passing `{ scissorX, scissorY, scissorWidth, scissorHeight }` props.
+
+### `shader.regl`
+
+Returns the underlying `regl` instance that was created for use with this shader.
 
 ### Default Shaders
 
