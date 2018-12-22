@@ -2,7 +2,7 @@
 
 ---
 
-### `canvas-sketch-util/geometry`
+### `canvas-sketch-util/penplot`
 
 A set of utilities around pen plotting with the [AxiDraw V3](https://shop.evilmadscientist.com/productsmenu/846). This is ideally used alongside [canvas-sketch](https://github.com/mattdesl/canvas-sketch) CLI tools for exporting SVG files.
 
