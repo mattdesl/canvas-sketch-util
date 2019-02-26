@@ -76,7 +76,7 @@ npm install canvas-sketch-util --save
 
 For full API documentation, see [Documentation](./docs/README.md).
 
-You can also see a few examples in [./test/exampels.js](./test/examples.js).
+You can also see a few examples in [./test/examples.js](./test/examples.js).
 
 ## License
 
