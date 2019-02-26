@@ -15,6 +15,8 @@ module.exports.relativeLuminance = function relativeLuminance (color) {
   return rgbLuminance(result.rgb);
 };
 
+// Extracted from @tmcw / wcag-contrast
+// https://github.com/tmcw/wcag-contrast
 module.exports.contrastRatio = function contrastRatio (colorA, colorB) {
   var a = module.exports.relativeLuminance(colorA);
   var b = module.exports.relativeLuminance(colorB);
