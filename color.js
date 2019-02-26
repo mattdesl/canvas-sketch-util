@@ -53,6 +53,7 @@ module.exports.blend = function (background, foreground, opacity) {
   return module.exports.parse(c1); // re-parse to get new metadata
 };
 
+// Exposed but not yet documented
 module.exports.hexToRGBA = hexToRGBA;
 module.exports.RGBAToHex = RGBAToHex;
 module.exports.RGBAToHSLA = HSLUtil.RGBAToHSLA;

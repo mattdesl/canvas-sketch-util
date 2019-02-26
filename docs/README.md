@@ -22,6 +22,7 @@ const { fract, mod, clamp } = require('canvas-sketch-util/math');
 
 - [`math`](./math.md) - Math & interpolation utilities
 - [`random`](./random.md) - A random number generator
+- [`color`](./color.md) - RGB and HSL color utilities
 - [`geometry`](./geometry.md) - Geometry & shape utilities
 - [`penplot`](./penplot.md) - Pen plotter & AxiDraw utilities
 - [`shader`](./shader.md) - A full-screen GLSL shader utility

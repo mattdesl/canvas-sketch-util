@@ -53,6 +53,7 @@ The following modules have been implemented:
 
 - [`math`](./docs/math.md) - Math & interpolation utilities
 - [`random`](./docs/random.md) - A random number generator
+- [`color`](./docs/color.md) - RGB and HSL color utilities
 - [`geometry`](./docs/geometry.md) - Utilities for geometry & shapes
 - [`penplot`](./docs/penplot.md) - Utilities for working with pen plotters (e.g. AxiDraw)
 - [`shader`](./docs/shader.md) - A full-screen GLSL shader utility
@@ -60,7 +61,6 @@ The following modules have been implemented:
 The following are planned but not yet implemented:
 
 - `tween` - Tweening, easing & animation utilities
-- `color` - Color and color space utilities
 
 And more to come...
 

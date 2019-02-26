@@ -32,7 +32,7 @@
     "test": "npm run lint && tape test/test-*.js",
     "lint": "npm run lint:es5 && npm run lint:es6",
     "lint:es6": "semistandard",
-    "lint:es5": "eslint --parser-options=ecmaVersion:5 --no-eslintrc *.js"
+    "lint:es5": "eslint --parser-options=ecmaVersion:5 --no-eslintrc *.js lib/*.js"
   },
   "keywords": [
     "genart",

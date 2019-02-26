@@ -110,8 +110,8 @@ function createShader (opt) {
       // Flush pending GL calls for this frame
       gl.flush();
     },
-    regl,
-    drawQuad,
+    regl: regl,
+    drawQuad: drawQuad,
     unload: function () {
       // Remove GL texture mappings
       textureMap.clear();
