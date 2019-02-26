@@ -1,4 +1,5 @@
 var defined = require('defined');
+var wrap = require('./lib/wrap');
 var EPSILON = Number.EPSILON;
 
 function clamp (value, min, max) {
@@ -136,23 +137,6 @@ function sign (n) {
   if (n > 0) return 1;
   else if (n < 0) return -1;
   else return 0;
-}
-
-function wrap (value, from, to) {
-  if (typeof from !== 'number' || typeof to !== 'number') {
-    throw new TypeError('Must specify "to" and "from" arguments as numbers');
-  }
-  // algorithm from http://stackoverflow.com/a/5852628/599884
-  if (from > to) {
-    var t = from;
-    from = to;
-    to = t;
-  }
-  var cycle = to - from;
-  if (cycle === 0) {
-    return to;
-  }
-  return value - cycle * Math.floor((value - from) / cycle);
 }
 
 // Specific function from Unity / ofMath, not sure its needed?

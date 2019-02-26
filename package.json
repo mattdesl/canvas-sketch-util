@@ -10,8 +10,11 @@
     "url": "https://github.com/mattdesl"
   },
   "dependencies": {
+    "color-luminance": "^2.1.0",
     "convert-length": "^1.0.1",
     "defined": "^1.0.0",
+    "float-hsl2rgb": "^1.0.2",
+    "float-rgb2hsl": "^1.0.1",
     "lineclip": "^1.1.5",
     "parse-color": "^1.0.0",
     "primitive-quad": "^2.0.0",
