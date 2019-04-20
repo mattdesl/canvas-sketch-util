@@ -4,6 +4,15 @@ module.exports.clipSegmentToCircle = require('./lib/clip/clip-segment-to-circle'
 module.exports.clipLineToCircle = require('./lib/clip/clip-line-to-circle');
 
 module.exports.clipPolylinesToBox = function (polylines, bbox, border, closeLines) {
+  if (!Array.isArray(bbox) || (bbox.length !== 2 && bbox.length !== 4)) {
+    throw new Error('Expected box to either be format [ minPoint, maxPoint ] or [ minX, minY, maxX, maxY ]');
+  }
+  // Expand nested format to flat bounds
+  if (bbox.length === 2) {
+    var min = bbox[0];
+    var max = bbox[1];
+    bbox = [ min[0], min[1], max[0], max[1] ];
+  }
   closeLines = closeLines !== false;
   border = Boolean(border);
 
@@ -28,6 +37,16 @@ module.exports.clipPolylinesToBox = function (polylines, bbox, border, closeLine
 
 module.exports.createHatchLines = createHatchLines;
 function createHatchLines (bounds, angle, spacing, out) {
+  if (!Array.isArray(bounds) || (bounds.length !== 2 && bounds.length !== 4)) {
+    throw new Error('Expected box to either be format [ minPoint, maxPoint ] or [ minX, minY, maxX, maxY ]');
+  }
+  // Expand nested format to flat bounds
+  if (bounds.length === 2) {
+    var min = bounds[0];
+    var max = bounds[1];
+    bounds = [ min[0], min[1], max[0], max[1] ];
+  }
+
   if (angle == null) angle = -Math.PI / 4;
   if (spacing == null) spacing = 0.5;
   if (out == null) out = [];
@@ -37,10 +56,10 @@ function createHatchLines (bounds, angle, spacing, out) {
   spacing = Math.abs(spacing);
   if (spacing === 0) throw new Error('cannot use a spacing of zero as it will run an infinite loop!');
 
-  var xmin = bounds[0][0];
-  var ymin = bounds[0][1];
-  var xmax = bounds[1][0];
-  var ymax = bounds[1][1];
+  var xmin = bounds[0];
+  var ymin = bounds[1];
+  var xmax = bounds[2];
+  var ymax = bounds[3];
 
   var w = xmax - xmin;
   var h = ymax - ymin;
@@ -49,8 +68,8 @@ function createHatchLines (bounds, angle, spacing, out) {
   var rotAngle = Math.PI / 2 - angle;
   var ca = Math.cos(rotAngle);
   var sa = Math.sin(rotAngle);
-  var cx = bounds[0][0] + (w / 2);
-  var cy = bounds[0][1] + (h / 2);
+  var cx = xmin + (w / 2);
+  var cy = ymin + (h / 2);
   var i = -r;
   while (i <= r) {
     // Line starts at (i, -r) and goes to (i, +r)

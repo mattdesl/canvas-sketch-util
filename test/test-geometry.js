@@ -34,20 +34,34 @@ test('should clip lines with border but not closed paths', t => {
   ];
   const trimmed = geometry.clipPolylinesToBox(lines, box, true, false);
   t.deepEqual(trimmed, [ [ [ 1, 1 ], [ 1, 1 ], [ 1.5, 1.5 ], [ 1, 1.5 ] ] ]);
+
+  // also handle nested box format
+  const trimmed2 = geometry.clipPolylinesToBox(lines, [
+    [ 1, 1 ], [ 2, 2 ]
+  ], true, false);
+  t.deepEqual(trimmed2, [ [ [ 1, 1 ], [ 1, 1 ], [ 1.5, 1.5 ], [ 1, 1.5 ] ] ]);
   t.end();
 });
 
 // Not sure of a good way to test this...
-// test('should get hatch lines', t => {
-//   const bbox = [
-//     [ 0, 0 ], [ 2, 2 ]
-//   ];
-//   const lines = geometry.createHatchLines(bbox, 0, 1).map(line => {
-//     return line.map(point => point.map(n => Math.floor(n)))
-//   });
-//   t.deepEqual(lines);
-//   t.end();
-// });
+test('should get hatch lines', t => {
+  const bbox = [
+    [ 0, 0 ], [ 1, 1 ]
+  ];
+  let lines = geometry.createHatchLines(bbox, 0, 0.5).map(line => {
+    return line.map(point => point.map(n => Math.floor(n)))
+  });
+  t.deepEqual(lines, [ [ [ 1, 0 ], [ -1, 0 ] ], [ [ 1, 0 ], [ -1, 0 ] ] ]);
+
+  // also handles flat box format
+  lines = geometry.createHatchLines([
+    0, 0, 1, 1
+  ], 0, 0.5).map(line => {
+    return line.map(point => point.map(n => Math.floor(n)))
+  });
+  t.deepEqual(lines, [ [ [ 1, 0 ], [ -1, 0 ] ], [ [ 1, 0 ], [ -1, 0 ] ] ]);
+  t.end();
+});
 
 test('should clip line', t => {
   let line, circle, radius, hits, isHit;
