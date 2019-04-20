@@ -39,7 +39,11 @@ const clipped = clipLinesToBox(polylines, box)
 
 Computes the lines needed to "hatch fill" the given bounding box, with the specified hatch angle for all lines and `spacing` between each line.
 
-`bounds` is a bounding box in the form `[ [ minX, minY ], [ maxX, maxY ] ]`, `angle` is in radians, and `spacing` is in your working units. The resulting lines are pushed to `out` (or a new array), leading to a list of `[ p0, p1 ]` lines.
+- `bounds` is a bounding box in the form `[ [ minX, minY ], [ maxX, maxY ] ]` or `[ minX, minY, maxX, maxY ]`
+- `angle` is in radians
+- `spacing` is in your working units
+
+The resulting lines are pushed to `out` (or a new array), leading to a list of `[ p0, p1 ]` lines.
 
 <a name="clipLineToCircle"></a>
 
@@ -69,7 +73,7 @@ Returns false if no collision occurred.
 
 ### `newLines = clipPolylinesToBox(lines, box, border = false, closeLines = true)`
 
-Clips the 2D `lines` list (each containing an array of 2D coordinates) to a 2D bounding box, defined by `[ minX, minY, maxX, maxY ]`. If you specify `border` as true, you will end up with a border line around the clipped bounding box. If you specify `closeLines` as false, paths will not be closed by default, i.e. you will have to close them during rendering.
+Clips the 2D `lines` list (each containing an array of 2D coordinates) to a 2D bounding box, defined by `[ minX, minY, maxX, maxY ]` or `[ [ minX, minY ], [ maxX, maxY ] ]`. If you specify `border` as true, you will end up with a border line around the clipped bounding box. If you specify `closeLines` as false, paths will not be closed by default, i.e. you will have to close them during rendering.
 
 The return value, `newLines`, is a new list of polylines that has been clipped.
 
