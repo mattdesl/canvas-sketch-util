@@ -10,6 +10,7 @@
     "url": "https://github.com/mattdesl"
   },
   "dependencies": {
+    "almost-equal": "^1.1.0",
     "color-luminance": "^2.1.0",
     "convert-length": "^1.0.1",
     "defined": "^1.0.0",
