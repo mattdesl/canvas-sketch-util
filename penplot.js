@@ -1,9 +1,70 @@
 var defined = require('defined');
 var convert = require('convert-length');
+var d3 = require('d3-path');
+var svgPathContours = require('svg-path-contours');
+var svgPathParse = require('parse-svg-path');
+var svgPathAbs = require('abs-svg-path');
 
 var DEFAULT_PEN_THICKNESS = 0.03;
 var DEFAULT_PEN_THICKNESS_UNIT = 'cm';
 var DEFAULT_PIXELS_PER_INCH = 90;
+
+// Takes SVG string and returns a list of absolute commands
+module.exports.getSVGCommands = getSVGCommands;
+function getSVGCommands (svgString) {
+  return svgPathAbs(svgPathParse(svgString));
+}
+
+// A Path helper for arcs, curves and lineTo commands
+module.exports.createPath = createPath;
+function createPath (fn) {
+  var path = d3.path();
+  path.toContours = toContours.bind(path);
+  path.toCommands = toCommands.bind(path);
+  if (typeof fn === 'function') fn(path);
+  return path;
+}
+
+// Functions to be bound to new path interfaces
+function toCommands () {
+  return getSVGCommands(this.toString());
+}
+
+function toContours (opt) {
+  var commands = svgPathParse(this.toString());
+  return getContoursFromRawCommands(commands, opt);
+}
+
+module.exports.getContourResolution = function (props) {
+  if (typeof props === 'string') props = { units: props };
+  return Math.max(1, convert(1, props.units, 'px'));
+};
+
+module.exports.getSVGContours = getSVGContours;
+function getSVGContours (svg, opt) {
+  if (!svg) throw new Error('Must specify a SVG string or list of path commands');
+  if (typeof svg === 'string') {
+    svg = svgPathParse(svg);
+  }
+  return getContoursFromRawCommands(svg, opt);
+}
+
+function getContoursFromRawCommands (commands, opt) {
+  if (typeof opt === 'number') {
+    opt = { resolution: opt };
+  } else if (opt == null) {
+    opt = { resolution: null }; // let it default
+  }
+  var resolution = opt.resolution;
+  if (resolution == null) {
+    // default resolution
+    resolution = 1;
+  }
+  if (resolution <= 0 || !isFinite(resolution) || typeof resolution !== 'number') {
+    throw new Error('{ resolution } must be finite and above zero');
+  }
+  return svgPathContours(commands, resolution);
+}
 
 module.exports.polylinesToSVG = function polylinesToSVG (polylines, opt) {
   opt = opt || {};

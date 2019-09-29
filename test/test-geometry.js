@@ -49,7 +49,7 @@ test('should get hatch lines', t => {
     [ 0, 0 ], [ 1, 1 ]
   ];
   let lines = geometry.createHatchLines(bbox, 0, 0.5).map(line => {
-    return line.map(point => point.map(n => Math.floor(n)))
+    return line.map(point => point.map(n => Math.floor(n)));
   });
   t.deepEqual(lines, [ [ [ 1, 0 ], [ -1, 0 ] ], [ [ 1, 0 ], [ -1, 0 ] ] ]);
 
@@ -57,7 +57,7 @@ test('should get hatch lines', t => {
   lines = geometry.createHatchLines([
     0, 0, 1, 1
   ], 0, 0.5).map(line => {
-    return line.map(point => point.map(n => Math.floor(n)))
+    return line.map(point => point.map(n => Math.floor(n)));
   });
   t.deepEqual(lines, [ [ [ 1, 0 ], [ -1, 0 ] ], [ [ 1, 0 ], [ -1, 0 ] ] ]);
   t.end();

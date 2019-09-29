@@ -9,12 +9,26 @@ A set of utilities around pen plotting with the [AxiDraw V3](https://shop.evilma
 ### Example
 
 ```js
-const { polylinesToSVG } = require('canvas-sketch-util/penplot');
+const { polylinesToSVG, createPath } = require('canvas-sketch-util/penplot');
 
 // A list of 2D polylines
 const polylines = [
   [ [ 0, 0 ], [ 1, 1 ], [ 1.5, 1.5 ], [ 0, 1.5 ] ]
 ];
+
+// Or you can use the Path interface
+// for Canvas2D-like functions
+const paths = createPath(context => {
+  context.moveTo(25, 50);
+  context.lineTo(10, 10);
+  context.arc(52, 50, 25, 0, Math.PI * 2);
+});
+
+// The curve resolution will depend on your
+// dimensions and working units
+const polylines = paths.toContours({
+  resolution: 10
+});
 
 // Generate a SVG file as a string
 const svg = polylinesToSVG(polylines, {
@@ -27,8 +41,50 @@ const svg = polylinesToSVG(polylines, {
 
 ### Functions
 
+- [createPath](#createPath)
 - [polylinesToSVG](#polylinesToSVG)
 - [renderPolylines](#renderPolylines)
+- [getSVGCommands](#getSVGCommands)
+- [getSVGContours](#getSVGContours)
+
+<a name="createPath"></a>
+
+### `path = createPath([fn])`
+
+Creates a new *Path* serializer which can be used for drawing lines, arcs, rectangles and shapes with Canvas2D-style functions. If you specify a `fn`, it will be called with the path as the argument before returning. For example:
+
+```js
+const path = createPath(context => {
+  // Circle in centre of page
+  context.arc(width / 2, height / 2, 25, 0, Math.PI * 2);
+});
+
+// Get a SVG string of the path
+const svg = path.toString();
+
+// Discretize all curves into a list of polyline contours
+const contours = path.toContours();
+
+// Get absolute SVG commands as an array
+const commands = path.toCommands();
+```
+
+The *Path* interface has the following drawing functions, see [d3-path API](https://www.npmjs.com/package/d3-path#api-reference) for details. The drawing functions match those in Canvas2D contexts.
+
+- `moveTo(x, y)`
+- `lineTo(x, y)`
+- `quadraticCurveTo(cpx, cpy, x, y)`
+- `bezierCurveTo(cpx1, cpy1, cpx2, cpy2, x, y)`
+- `arcTo(x1, y1, x2, y2, radius)`
+- `arc(x, y, radius, startAngle, endAngle[, anticlockwise])`
+- `closePath()`
+- `rect(x, y, width, height)`
+
+In addition, there are three ways of serializing the path:
+
+- `toString()` – returns a SVG string representation
+- `toCommands()` – returns an absolute list of SVG commands in `[ [ c, x, y, .. ] ]` format.
+- `toContours({ resolution=1 })` – returns a list of polyline contours representing the path, using the given `{ resolution }` option for discretizing curves into lines. Higher resolutions produce more points around curves.
 
 <a name="polylinesToSVG"></a>
 
@@ -108,6 +164,20 @@ Full list of expected props:
 - `background` The background `fillStyle` for 2D canvas, default `'white'`
 - `foreground` The foreground `strokeStyle` applied only to the 2D canvas, defaults to `'black'` (use this if you wish to have a white stroke on black PNG, but still a black stroke SVG)
 - Other properties passed into `polylinesToSVG` function
+
+<a name="getSVGCommands"></a>
+
+### `commands = getSVGCommands(svg)`
+
+From the given `svg` string, returns a list of absolute commands in the format `[ [ c, x, y... ] ]` where `c` represents a type string like `'M'`, `'C'`, `'L'`, etc.
+
+<a name="getSVGContours"></a>
+
+### `contours = getSVGContours(svg, resolution=1)`
+
+Discretizes the `svg` string or list of parsed SVG commands, returning a list of polyline contours representing the path. This is useful to convert curves into a finite set of points for things like line clipping, triangulation, plotter code, etc.
+
+The `resolution` has to do with the distance tolerance used when converting curves into line segments. Higher resolutions lead to smoother curves, but at the cost of additional points. This value will be relative to the rendering scale you are working with (e.g. px or cm).
 
 ## 
 

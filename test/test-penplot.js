@@ -82,3 +82,11 @@ test('should return a physical SVG', t => {
 </svg>`.trim());
   t.end();
 });
+
+test('should return commands', t => {
+  let svg;
+
+  svg = penplot.createPath(context => {
+
+  });
+})  
