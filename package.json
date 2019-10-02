@@ -1,6 +1,6 @@
 {
   "name": "canvas-sketch-util",
-  "version": "1.8.0",
+  "version": "1.9.0",
   "description": "Utilities for sketching in Canvas, WebGL and generative art",
   "main": "index.js",
   "license": "MIT",
