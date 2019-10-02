@@ -12,6 +12,7 @@
   "dependencies": {
     "abs-svg-path": "^0.1.1",
     "almost-equal": "^1.1.0",
+    "clone": "^2.1.2",
     "color-luminance": "^2.1.0",
     "convert-length": "^1.0.1",
     "d3-path": "^1.0.8",
@@ -19,6 +20,7 @@
     "float-hsl2rgb": "^1.0.2",
     "float-rgb2hsl": "^1.0.1",
     "lineclip": "^1.1.5",
+    "normalize-svg-path": "^1.0.1",
     "parse-color": "^1.0.0",
     "parse-svg-path": "^0.1.2",
     "primitive-quad": "^2.0.0",

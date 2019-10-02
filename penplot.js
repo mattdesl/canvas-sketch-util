@@ -4,69 +4,74 @@ var d3 = require('d3-path');
 var svgPathContours = require('svg-path-contours');
 var svgPathParse = require('parse-svg-path');
 var svgPathAbs = require('abs-svg-path');
+var svgPathArcs = require('normalize-svg-path');
+var clone = require('clone');
 
 var DEFAULT_PEN_THICKNESS = 0.03;
 var DEFAULT_PEN_THICKNESS_UNIT = 'cm';
 var DEFAULT_PIXELS_PER_INCH = 90;
 
-// Takes SVG string and returns a list of absolute commands
-module.exports.getSVGCommands = getSVGCommands;
-function getSVGCommands (svgString) {
-  return svgPathAbs(svgPathParse(svgString));
-}
-
 // A Path helper for arcs, curves and lineTo commands
 module.exports.createPath = createPath;
 function createPath (fn) {
   var path = d3.path();
-  path.toContours = toContours.bind(path);
-  path.toCommands = toCommands.bind(path);
   if (typeof fn === 'function') fn(path);
+  path.lineTo = wrap(path.lineTo);
+  path.quadraticCurveTo = wrap(path.quadraticCurveTo);
+  path.bezierCurveTo = wrap(path.bezierCurveTo);
   return path;
-}
 
-// Functions to be bound to new path interfaces
-function toCommands () {
-  return getSVGCommands(this.toString());
-}
-
-function toContours (opt) {
-  var commands = svgPathParse(this.toString());
-  return getContoursFromRawCommands(commands, opt);
-}
-
-module.exports.getContourResolution = function (props) {
-  if (typeof props === 'string') props = { units: props };
-  return Math.max(1, convert(1, props.units, 'px'));
-};
-
-module.exports.getSVGContours = getSVGContours;
-function getSVGContours (svg, opt) {
-  if (!svg) throw new Error('Must specify a SVG string or list of path commands');
-  if (typeof svg === 'string') {
-    svg = svgPathParse(svg);
+  // Patch a bug in d3-path that doesn't handle
+  // lineTo and so on without an initial moveTo
+  function wrap (fn) {
+    return function () {
+      var args = Array.prototype.slice.call(arguments);
+      if (path._x1 == null && path._y1 == null) {
+        path.moveTo(args[0], args[1]);
+      }
+      return fn.apply(path, args);
+    };
   }
-  return getContoursFromRawCommands(svg, opt);
 }
 
-function getContoursFromRawCommands (commands, opt) {
-  if (typeof opt === 'number') {
-    opt = { resolution: opt };
-  } else if (opt == null) {
-    opt = { resolution: null }; // let it default
-  }
-  var resolution = opt.resolution;
-  if (resolution == null) {
-    // default resolution
-    resolution = 1;
-  }
-  if (resolution <= 0 || !isFinite(resolution) || typeof resolution !== 'number') {
-    throw new Error('{ resolution } must be finite and above zero');
-  }
-  return svgPathContours(commands, resolution);
+module.exports.pathsToSVGPaths = pathsToSVGPaths;
+function pathsToSVGPaths (inputs, opt) {
+  opt = opt || {};
+
+  var svgPath = convertToSVGPath(inputs, opt);
+  var svgPaths = Array.isArray(svgPath) ? svgPath : [ svgPath ];
+  return svgPaths.filter(Boolean);
 }
 
-module.exports.polylinesToSVG = function polylinesToSVG (polylines, opt) {
+module.exports.pathsToPolylines = pathsToPolylines;
+function pathsToPolylines (inputs, opt) {
+  opt = opt || {};
+
+  var scale;
+  if (opt.curveResolution != null && isFinite(opt.curveResolution) && typeof opt.curveResolution === 'number') {
+    scale = opt.curveResolution;
+  } else {
+    var units = opt.units || 'px';
+    scale = Math.max(1, convert(1, units, 'px'));
+  }
+
+  var contours = [];
+  eachPath(inputs, function (feature) {
+    if (typeof feature === 'string') {
+      var commands = svgPathParse(feature);
+      var subContours = svgPathContours(commands, scale);
+      subContours.forEach(function (subContour) {
+        contours.push(subContour);
+      });
+    } else {
+      contours.push(clone(feature));
+    }
+  });
+  return contours;
+}
+
+module.exports.pathsToSVG = pathsToSVG;
+function pathsToSVG (inputs, opt) {
   opt = opt || {};
 
   var width = opt.width;
@@ -79,22 +84,15 @@ module.exports.polylinesToSVG = function polylinesToSVG (polylines, opt) {
 
   var units = opt.units || 'px';
 
-  var commands = [];
   var convertOptions = {
+    units: units,
     roundPixel: false,
     precision: defined(opt.precision, 5),
     pixelsPerInch: DEFAULT_PIXELS_PER_INCH
   };
-  polylines.forEach(function (line) {
-    line.forEach(function (point, j) {
-      var type = (j === 0) ? 'M' : 'L';
-      var x = convert(point[0], units, 'px', convertOptions).toString();
-      var y = convert(point[1], units, 'px', convertOptions).toString();
-      commands.push(type + x + ' ' + y);
-    });
-  });
 
-  var svgPath = commands.join(' ');
+  var svgPaths = pathsToSVGPaths(inputs, convertOptions);
+
   var viewWidth = convert(width, units, 'px', convertOptions).toString();
   var viewHeight = convert(height, units, 'px', convertOptions).toString();
   var fillStyle = opt.fillStyle || 'none';
@@ -107,20 +105,25 @@ module.exports.polylinesToSVG = function polylinesToSVG (polylines, opt) {
     lineWidth = convert(DEFAULT_PEN_THICKNESS, DEFAULT_PEN_THICKNESS_UNIT, units, convertOptions).toString();
   }
 
+  var pathElements = svgPaths.map(function (d) {
+    return '    <path d="' + d + '" fill="' + fillStyle + '" stroke="' + strokeStyle + '" stroke-width="' + lineWidth + units + '" />';
+  }).join('\n');
+
   return [
     '<?xml version="1.0" standalone="no"?>',
-    '  <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" ',
-    '      "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">',
-    '  <svg width="' + width + units + '" height="' + height + units + '"',
-    '      xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 ' + viewWidth + ' ' + viewHeight + '">',
-    '    <g>',
-    '      <path d="' + svgPath + '" fill="' + fillStyle + '" stroke="' + strokeStyle + '" stroke-width="' + lineWidth + units + '" />',
-    '    </g>',
+    '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" ',
+    '    "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">',
+    '<svg width="' + width + units + '" height="' + height + units + '"',
+    '    xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 ' + viewWidth + ' ' + viewHeight + '">',
+    '  <g>',
+    pathElements,
+    '  </g>',
     '</svg>'
   ].join('\n');
-};
+}
 
-module.exports.renderPolylines = function (polylines, opt) {
+module.exports.renderPaths = renderPaths;
+function renderPaths (inputs, opt) {
   opt = opt || {};
 
   var context = opt.context;
@@ -151,16 +154,25 @@ module.exports.renderPolylines = function (polylines, opt) {
   context.fillStyle = opt.background || 'white';
   context.fillRect(0, 0, width, height);
 
+  context.strokeStyle = opt.foreground || opt.strokeStyle || 'black';
+  context.lineWidth = lineWidth;
+  context.lineJoin = opt.lineJoin || 'round';
+  context.lineCap = opt.lineCap || 'round';
+
   // Draw lines
-  polylines.forEach(function (points) {
+  eachPath(inputs, function (feature) {
     context.beginPath();
-    points.forEach(function (p) {
-      context.lineTo(p[0], p[1]);
-    });
-    context.strokeStyle = opt.foreground || opt.strokeStyle || 'black';
-    context.lineWidth = lineWidth;
-    context.lineJoin = opt.lineJoin || 'round';
-    context.lineCap = opt.lineCap || 'round';
+
+    if (typeof feature === 'string') {
+      // SVG string = drawSVGPath;
+      drawSVGPath(context, feature);
+    } else {
+      // list of points
+      feature.forEach(function (p) {
+        context.lineTo(p[0], p[1]);
+      });
+    }
+
     context.stroke();
   });
 
@@ -170,8 +182,130 @@ module.exports.renderPolylines = function (polylines, opt) {
     context.canvas,
     // Export SVG for pen plotter as second layer
     {
-      data: module.exports.polylinesToSVG(polylines, opt),
+      data: pathsToSVG(inputs, opt),
       extension: '.svg'
     }
   ];
+}
+
+// Not documented...
+module.exports.convertToSVGPath = convertToSVGPath;
+function convertToSVGPath (input, opt) {
+  // Input can be a single 'path' (string, object or polyline),
+  // or nested 'path' elements
+
+  // non-path
+  if (isEmpty(input)) return '';
+
+  // strings are just returned as-is
+  if (typeof input === 'string') return input;
+
+  // assume a path instance
+  if (isPath(input)) {
+    return input.toString();
+  }
+
+  if (isPolyline(input)) {
+    return polylineToSVGPath(input, opt);
+  }
+
+  // assume a list of 'path' features or a list of polylines
+  if (Array.isArray(input)) {
+    return input.map(function (feature) {
+      return convertToSVGPath(feature, opt);
+    }).reduce(function (a, b) {
+      return a.concat(b);
+    }, []);
+  }
+
+  // Wasn't clear... let's return an empty path
+  return '';
+}
+
+module.exports.eachPath = eachPath;
+function eachPath (input, cb) {
+  if (isEmpty(input)) {
+    // pass-through
+  } else if (typeof input === 'string' || (isPath(input))) {
+    cb(input.toString());
+  } else if (isPolyline(input)) {
+    cb(input);
+  } else if (Array.isArray(input)) {
+    input.forEach(function (feature) {
+      return eachPath(feature, cb);
+    });
+  }
+}
+
+module.exports.drawSVGPath = drawSVGPath;
+function drawSVGPath (context, svgPath) {
+  var commands = svgPathArcs(svgPathAbs(svgPathParse(svgPath)));
+  for (var i = 0; i < commands.length; i++) {
+    var c = commands[i];
+    var type = c[0];
+    if (type === 'M') {
+      context.moveTo(c[1], c[2]);
+    } else if (type === 'C') {
+      context.bezierCurveTo(c[1], c[2], c[3], c[4], c[5], c[6]);
+    } else {
+      throw new Error('Illegal type "' + type + '" in SVG commands');
+    }
+  }
+}
+
+module.exports.polylineToSVGPath = polylineToSVGPath;
+function polylineToSVGPath (polyline, opt) {
+  opt = opt || {};
+  var units = opt.units || 'px';
+
+  var commands = [];
+  var convertOptions = {
+    roundPixel: false,
+    precision: defined(opt.precision, 5),
+    pixelsPerInch: DEFAULT_PIXELS_PER_INCH
+  };
+  polyline.forEach(function (point, j) {
+    var type = (j === 0) ? 'M' : 'L';
+    var x = convert(point[0], units, 'px', convertOptions).toString();
+    var y = convert(point[1], units, 'px', convertOptions).toString();
+    commands.push(type + x + ' ' + y);
+  });
+  return commands.join(' ');
+}
+
+function isEmpty (input) {
+  return !input || (Array.isArray(input) && input.length === 0);
+}
+
+function isPath (input) {
+  return typeof input === 'object' && input && !Array.isArray(input);
+}
+
+function isPolyline (input) {
+  // empty array or not an array
+  if (!input || !Array.isArray(input) || input.length === 0) return false;
+  // if at least one of the inputs is a point, assume they all are
+  return isPoint(input[0]);
+}
+
+function isPoint (point) {
+  return Array.isArray(point) && point.length >= 2 && point.every(function (p) {
+    return typeof p === 'number';
+  });
+}
+
+// @deprecated
+module.exports.polylinesToSVG = function polylinesToSVG (polylines, opt) {
+  if (!Array.isArray(polylines)) throw new Error('Expected array of arrays for polylines');
+  console.warn('polylinesToSVG is deprecated, use pathsToSVG instead which has the same functionality');
+  // Create a single string from polylines
+  return pathsToSVG(polylines, opt);
+};
+
+// @deprecated
+module.exports.renderPolylines = function renderPolylines (polylines, opt) {
+  if (!Array.isArray(polylines)) throw new Error('Expected array of arrays for polylines');
+  console.warn('renderPolylines is deprecated, use renderPaths instead which has the same functionality');
+  // Create a single string from polylines
+  return renderPaths(polylines, opt);
 };

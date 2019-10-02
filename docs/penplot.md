@@ -6,32 +6,32 @@
 
 A set of utilities around pen plotting with the [AxiDraw V3](https://shop.evilmadscientist.com/productsmenu/846). This is ideally used alongside [canvas-sketch](https://github.com/mattdesl/canvas-sketch) CLI tools for exporting SVG files.
 
+This tool allows you to create arbitrary "path" instances using familiar Canvas2D APIs, and then serialize these as a complete SVG that should be plottable.
+
 ### Example
 
 ```js
-const { polylinesToSVG, createPath } = require('canvas-sketch-util/penplot');
+const { pathsToSVG, createPath } = require('canvas-sketch-util/penplot');
 
-// A list of 2D polylines
-const polylines = [
-  [ [ 0, 0 ], [ 1, 1 ], [ 1.5, 1.5 ], [ 0, 1.5 ] ]
-];
-
-// Or you can use the Path interface
-// for Canvas2D-like functions
-const paths = createPath(context => {
+// You can create a Path serializer like so
+const path0 = createPath(context => {
   context.moveTo(25, 50);
   context.lineTo(10, 10);
   context.arc(52, 50, 25, 0, Math.PI * 2);
 });
 
-// The curve resolution will depend on your
-// dimensions and working units
-const polylines = paths.toContours({
-  resolution: 10
-});
+// You can also append commands onto the path
+// path.lineTo(50, 50);
+
+// And/or you can use manual polylines like so
+const path1 = [
+  [ 0, 0 ], [ 50, 25 ], [ 25, 50 ]
+];
 
 // Generate a SVG file as a string
-const svg = polylinesToSVG(polylines, {
+// Accepts a single or multiple (potentially nested) "path" interfaces
+// A "path" can be a polyline, SVGPath string, or Path object from createPath
+const svg = pathsToSVG([ path0, path1 ], {
   width: 2,
   height: 2,
   units: 'cm',
@@ -42,10 +42,9 @@ const svg = polylinesToSVG(polylines, {
 ### Functions
 
 - [createPath](#createPath)
-- [polylinesToSVG](#polylinesToSVG)
-- [renderPolylines](#renderPolylines)
-- [getSVGCommands](#getSVGCommands)
-- [getSVGContours](#getSVGContours)
+- [pathsToPolylines](#pathsToPolylines)
+- [pathsToSVG](#pathsToSVG)
+- [renderPaths](#renderPaths)
 
 <a name="createPath"></a>
 
@@ -61,12 +60,6 @@ const path = createPath(context => {
 
 // Get a SVG string of the path
 const svg = path.toString();
-
-// Discretize all curves into a list of polyline contours
-const contours = path.toContours();
-
-// Get absolute SVG commands as an array
-const commands = path.toCommands();
 ```
 
 The *Path* interface has the following drawing functions, see [d3-path API](https://www.npmjs.com/package/d3-path#api-reference) for details. The drawing functions match those in Canvas2D contexts.
@@ -80,17 +73,46 @@ The *Path* interface has the following drawing functions, see [d3-path API](http
 - `closePath()`
 - `rect(x, y, width, height)`
 
-In addition, there are three ways of serializing the path:
+To get the SVGPath string, use `path.toString()`.
 
-- `toString()` – returns a SVG string representation
-- `toCommands()` – returns an absolute list of SVG commands in `[ [ c, x, y, .. ] ]` format.
-- `toContours({ resolution=1 })` – returns a list of polyline contours representing the path, using the given `{ resolution }` option for discretizing curves into lines. Higher resolutions produce more points around curves.
+<a name="pathsToPolylines"></a>
 
-<a name="polylinesToSVG"></a>
+### `polylines = pathsToPolylines(paths, opt)`
 
-### `svg = polylinesToSVG(lines, opt)`
+Converts a single or multiple (potentially listed) array of 'paths' (Path objects, SVGPath strings, or polylines) into a flat 1-dimensional list of polyline contours.
 
-Generates a physically-sized SVG file as a string from the given list of `lines` (each containing an array of 2D coordinates) with the specified options in `opt`.
+This is done by converting all SVGPath strings into cubic bezier arcs, and then subdividing them into discrete lists of points.
+
+```js
+const inputs = /* .. path, polylines, etc .. */;
+
+pathsToPolylines(inputs).forEach(contour => {
+  context.beginPath();
+  contour.forEach(point => {
+    context.lineTo(point[0], point[1]);
+  });
+  context.stroke();
+});
+```
+
+You can specify `{ curveResolution }` option (a number) to adjust the smoothness when converting SVG paths into discrete polyline lists. By default, this value is `1.0` converted into your local `{ units }` option. For example:
+
+```js
+// Use a resolution of 3
+pathsToPolylines(inputs, { curveResolution: 3 });
+
+// Choose a reasonable default resolution based on units
+pathsToPolylines(inputs, { units: 'cm' });
+
+// No options specified, will default to a resolution of 1.0
+pathsToPolylines(inputs);
+```
+
+<a name="pathsToSVG"></a>
+
+### `svg = pathsToSVG(paths, opt)`
+
+Generates a physically-sized SVG file as a string from the given list of `paths` with the specified options in `opt`. The `paths` can be a single or multiple nested path instances, such as Path objects from `createPath`, or SVGPath strings, or polylines (nested 2D points using arrays).
 
 Options:
 
@@ -106,9 +128,9 @@ Returns a string of the SVG file.
 
 The SVG is formatted in such a way that it can be easily opened and exported to AxiDraw V3 with Inkscape.
 
-<a name="renderPolylines"></a>
+<a name="renderPaths"></a>
 
-### `layers = renderPolylines(lines, props)`
+### `layers = renderPaths(lines, props)`
 
 Renders the specified list of `lines` (each containing an array of 2D coordinates) using the specified `props` (expected to be from `canvas-sketch`), returning an array of renderable layers: `[ canvas, svgOutput ]`.
 
@@ -122,7 +144,7 @@ Example:
 
 ```js
 const canvasSketch = require('canvas-sketch');
-const { renderPolylines } = require('canvas-sketch-util/penplot');
+const { createPath, renderPaths } = require('canvas-sketch-util/penplot');
 
 const settings = {
   dimensions: 'A4',
@@ -131,13 +153,14 @@ const settings = {
 };
 
 const sketch = ({ width, height }) => {
-  // List of polylines for our pen plot
-  let lines = [];
-
-  // ... popupate array with 2D polylines ...
-
+  // Create shapes with path interface
+  const shape0 = createPath(ctx => ctx.arc(0, 0, 50, 0, Math.PI * 2));
+  // And/or with polylines
+  const shape1 = [ [ 0, 0 ], [ 50, 25 ] ];
+  // Combine into an array or nested array
+  const paths = [ shape0, shape1 ];
   // Export both PNG and SVG files on 'Cmd + S'
-  return props => renderPolylines(lines, props);
+  return props => renderPaths(paths, props);
 };
 
 canvasSketch(sketch, settings);
@@ -148,7 +171,7 @@ You can also override settings such as `lineWidth` or `strokeStyle` if you want 
 ```js
 const sketch = ({ width, height }) => {
   // ...
-  return props => renderPolylines(lines, {
+  return props => renderPaths(paths, {
     ...props,
     lineWidth: 0.05
   });
@@ -163,21 +186,7 @@ Full list of expected props:
 - `height` (required) the width of the artwork in `units`
 - `background` The background `fillStyle` for 2D canvas, default `'white'`
 - `foreground` The foreground `strokeStyle` applied only to the 2D canvas, defaults to `'black'` (use this if you wish to have a white stroke on black PNG, but still a black stroke SVG)
-- Other properties passed into `polylinesToSVG` function
-
-<a name="getSVGCommands"></a>
-
-### `commands = getSVGCommands(svg)`
-
-From the given `svg` string, returns a list of absolute commands in the format `[ [ c, x, y... ] ]` where `c` represents a type string like `'M'`, `'C'`, `'L'`, etc.
-
-<a name="getSVGContours"></a>
-
-### `contours = getSVGContours(svg, resolution=1)`
-
-Discretizes the `svg` string or list of parsed SVG commands, returning a list of polyline contours representing the path. This is useful to convert curves into a finite set of points for things like line clipping, triangulation, plotter code, etc.
-
-The `resolution` has to do with the distance tolerance used when converting curves into line segments. Higher resolutions lead to smoother curves, but at the cost of additional points. This value will be relative to the rendering scale you are working with (e.g. px or cm).
+- Other properties passed into `pathsToSVG` function
 
 ## 
 
