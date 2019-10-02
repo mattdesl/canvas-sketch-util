@@ -52,7 +52,7 @@ function pathsToPolylines (inputs, opt) {
     scale = opt.curveResolution;
   } else {
     var units = opt.units || 'px';
-    scale = Math.max(1, convert(1, units, 'px'));
+    scale = Math.max(1, convert(4, units, 'px'));
   }
 
   var contours = [];

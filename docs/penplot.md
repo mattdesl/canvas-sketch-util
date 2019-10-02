@@ -95,7 +95,7 @@ pathsToPolylines(inputs).forEach(contour => {
 });
 ```
 
-You can specify `{ curveResolution }` option (a number) to adjust the smoothness when converting SVG paths into discrete polyline lists. By default, this value is `1.0` converted into your local `{ units }` option. For example:
+You can specify `{ curveResolution }` option (a number) to adjust the smoothness when converting SVG paths into discrete polyline lists. By default, a reasonable default will be selected from your `{ units }` option. For example:
 
 ```js
 // Use a resolution of 3
