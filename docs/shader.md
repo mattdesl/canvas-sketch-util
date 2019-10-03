@@ -40,7 +40,7 @@ const frag = `
 
 // Your sketch, which simply returns the shader
 const sketch = ({ gl }) => {
-  // Create the shader and return it
+  // Create the shader and return it. It will be rendered by regl.
   return createShader({
     // Pass along WebGL context
     gl,
@@ -64,7 +64,7 @@ Also see [Advanced Example](#advanced-example).
 
 ### `shader = createShader(opt)`
 
-Creates a full-screen GLSL shader renderer with `opt` settings. The following options can be used:
+Creates a full-screen GLSL shader renderer with `opt` settings (rendered by [regl](https://regl.party)). The following options can be used:
 
 - `gl` (required) the WebGL context to render to
 - `frag` the fragment shader string, or a function that returns a string
