@@ -13,6 +13,108 @@ test('should clip lines', t => {
   t.end();
 });
 
+test('should check collinearity', t => {
+  const pointsHoriz = [
+    [ 0, 0 ],
+    [ 1, 0 ],
+    [ 2, 0 ]
+  ];
+  const pointsOff = [
+    [ 0, 0 ],
+    [ 1, 0 ],
+    [ 2, 0.1 ]
+  ];
+  const angle = 45 * Math.PI / 180;
+  const dir = [ Math.cos(angle), Math.sin(angle) ];
+  const pointsAngled = [ 0, 1, 2 ].map(t => {
+    return [
+      dir[0] * t,
+      dir[1] * t
+    ];
+  });
+  t.equals(geometry.arePointsCollinear(...pointsHoriz), true);
+  t.equals(geometry.arePointsCollinear(...pointsOff), false);
+  t.equals(geometry.arePointsCollinear(...pointsAngled), true);
+  t.end();
+});
+
+test('should remove duplicates', t => {
+  const pointsHoriz = [
+    [ 0, 0 ],
+    [ 0, 0 ],
+    [ 1, 0 ],
+    [ 1.5, 0 ],
+    [ 1.5 + 1e-14, 0 ],
+    [ 2, 0 ]
+  ];
+  t.deepEqual(geometry.removeDuplicatePoints(pointsHoriz), [
+    [ 0, 0 ],
+    [ 1, 0 ],
+    [ 1.5, 0 ],
+    [ 2, 0 ]
+  ]);
+  t.deepEqual(geometry.removeDuplicatePoints([
+    [ 1.5, 0 ],
+    [ 1.5 + 1e-5, 0 ]
+  ]), [
+    [ 1.5, 0 ],
+    [ 1.5 + 1e-5, 0 ]
+  ]);
+  t.end();
+});
+
+test('should remove collinearity', t => {
+  t.deepEqual(geometry.removeCollinearPoints([
+    [ 0, 0 ],
+    [ 1, 0 ],
+    [ 2, 0 ]
+  ]), [
+    [ 0, 0 ],
+    [ 2, 0 ]
+  ]);
+
+  t.deepEqual(geometry.removeCollinearPoints([
+    [ 1, 1 ],
+    [ 0, 0 ],
+    [ 1, 0 ],
+    [ 2, 0 ]
+  ]), [
+    [ 1, 1 ],
+    [ 0, 0 ],
+    [ 2, 0 ]
+  ]);
+
+  t.deepEqual(geometry.removeCollinearPoints([
+    [ 1, 1 ],
+    [ 0, 0 ],
+    [ 0.5, 0 ],
+    [ 1.75, 0 ],
+    [ 1, 0 ],
+    [ 2, 0 ]
+  ]), [
+    [ 1, 1 ],
+    [ 0, 0 ],
+    [ 1.75, 0 ],
+    [ 1, 0 ],
+    [ 2, 0 ]
+  ]);
+
+  t.deepEqual(geometry.removeCollinearPoints([
+    [ 1, 1 ],
+    [ 0, 0 ],
+    [ 1, 0 ],
+    [ 2, 0 ],
+    [ 1, 0 ]
+  ]), [
+    [ 1, 1 ],
+    [ 0, 0 ],
+    [ 2, 0 ],
+    [ 1, 0 ]
+  ]);
+
+  t.end();
+});
+
 test('should clip lines with border', t => {
   const lines = [
     [ [ 0, 0 ], [ 1, 1 ], [ 1.5, 1.5 ], [ 0, 1.5 ] ]
@@ -248,6 +350,15 @@ test('should clip segment', t => {
   t.deepEqual(isHit, true);
   t.deepEqual(toFixed1(hits), [ [ 0, 0 ] ]);
 
+  t.end();
+});
+
+test('should get bounds', t => {
+  const lines = [ [ 0, 0 ], [ 1, 1 ], [ 1.5, 1.5 ], [ 0, 1.5 ] ];
+  t.deepEqual(geometry.getBounds(lines), [ [ 0, 0 ], [ 1.5, 1.5 ] ]);
+  t.throws(() => geometry.getBounds([]));
+  t.deepEqual(geometry.getBounds([ [ 1, 1 ] ]), [ [ 1, 1 ], [ 1, 1 ] ]);
+  t.deepEqual(geometry.getBounds([ [ 1, 1 ], [ -1, 4 ] ]), [ [ -1, 1 ], [ 1, 4 ] ]);
   t.end();
 });
 

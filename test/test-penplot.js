@@ -1,10 +1,11 @@
 const test = require('tape');
 const penplot = require('../penplot');
+// const convert = require('convert-length');
 
 test('should return a physical SVG', t => {
   let svg;
 
-  svg = penplot.polylinesToSVG([
+  svg = penplot.pathsToSVG([
     [ [ 0, 0 ], [ 2, 3 ], [ 2, 1 ] ]
   ], {
     width: 5,
@@ -22,7 +23,7 @@ test('should return a physical SVG', t => {
   </g>
 </svg>`.trim());
 
-  svg = penplot.polylinesToSVG([
+  svg = penplot.pathsToSVG([
     [ [ 0, 0 ], [ 2, 3 ], [ 2, 1 ] ]
   ], {
     units: 'cm',
@@ -41,7 +42,7 @@ test('should return a physical SVG', t => {
   </g>
 </svg>`.trim());
 
-  svg = penplot.polylinesToSVG([
+  svg = penplot.pathsToSVG([
     [ [ 0, 0 ], [ 2, 3 ], [ 2, 1 ] ]
   ], {
     units: 'in',
@@ -60,7 +61,7 @@ test('should return a physical SVG', t => {
   </g>
 </svg>`.trim());
 
-  svg = penplot.polylinesToSVG([
+  svg = penplot.pathsToSVG([
     [ [ 0, 0 ], [ 2, 3 ], [ 2, 1 ] ]
   ], {
     units: 'in',
@@ -153,5 +154,37 @@ test('convert to SVG paths', t => {
     'M1 1 L2 2',
     'M5,0A5,5,0,1,1,-5,0A5,5,0,1,1,5,0'
   ], 'convert nested mixed');
+  t.end();
+});
+
+test('should handle paths', t => {
+  const units = 'cm';
+
+  let path0 = penplot.createPath();
+  path0.moveTo(0, 0);
+  path0.lineTo(1, 1);
+
+  let path1 = penplot.createPath();
+  path1.moveTo(1, 1);
+  path1.lineTo(2, 2);
+
+  let svg;
+  svg = penplot.pathsToSVG([ path0, path1 ], {
+    units,
+    width: 5,
+    height: 5
+  });
+  t.equal(svg, `
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" 
+    "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="5cm" height="5cm"
+    xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 177.16535 177.16535">
+  <g>
+    <path d="M0 0 L0.10165 0.10165 L0.87588 0.87588 L2.32486 2.32486 L4.34479 4.34479 L8.21812 8.21812 L14.41199 14.41199 L21.02108 21.02108 L27.21495 27.21495 L31.08828 31.08828 L33.10821 33.10821 L34.55719 34.55719 L35.33143 35.33143 L35.43307 35.43307" fill="none" stroke="black" stroke-width="0.03cm" />
+    <path d="M35.43307 35.43307 L35.53472 35.53472 L36.30895 36.30895 L37.75793 37.75793 L39.77786 39.77786 L43.65119 43.65119 L49.84506 49.84506 L56.45416 56.45416 L62.64802 62.64802 L66.52135 66.52135 L68.54128 68.54128 L69.99026 69.99026 L70.7645 70.7645 L70.86614 70.86614" fill="none" stroke="black" stroke-width="0.03cm" />
+  </g>
+</svg>`.trim());
+
   t.end();
 });

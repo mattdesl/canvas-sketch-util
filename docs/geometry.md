@@ -4,7 +4,7 @@
 
 ### `canvas-sketch-util/geometry`
 
-A set of utilities around geometry and shapes, typically for 2D and 3D rendering.
+A set of utilities around geometry and shapes. Most of these functions operate on 2D vectors in the form `[x, y]` unless otherwise stated.
 
 ### Example
 
@@ -32,6 +32,9 @@ const clipped = clipLinesToBox(polylines, box)
 - [clipLineToCircle](#clipLineToCircle)
 - [clipSegmentToCircle](#clipSegmentToCircle)
 - [clipPolylinesToBox](#clipPolylinesToBox)
+- [getBounds](#getBounds)
+- [arePointsCollinear](#arePointsCollinear)
+- [removeDuplicatePoints](#removeDuplicatePoints)
 
 <a name="createHatchLines"></a>
 
@@ -76,6 +79,33 @@ Returns false if no collision occurred.
 Clips the 2D `lines` list (each containing an array of 2D coordinates) to a 2D bounding box, defined by `[ minX, minY, maxX, maxY ]` or `[ [ minX, minY ], [ maxX, maxY ] ]`. If you specify `border` as true, you will end up with a border line around the clipped bounding box. If you specify `closeLines` as false, paths will not be closed by default, i.e. you will have to close them during rendering.
 
 The return value, `newLines`, is a new list of polylines that has been clipped.
+
+<a name="getBounds"></a>
+
+### `[ min, max ] = getBounds(lines)`
+
+Computes the n-dimensional bounds (box, cube, etc) from the given `lines` argument, which is typically an array of 2D or 3D coordinates. Returns the `[ min, max ]` bounds as coordinates of the same dimensionality.
+
+```js
+const polygon = [
+  [ 0, 0 ], [ 4, 1 ], [ 2, 3 ], [ -1, 1 ]
+];
+const [ min, max ] = getBounds(polygon);
+// min -> [ -1, 0 ]
+// max -> [ 4, 3 ]
+```
+
+<a name="arePointsCollinear"></a>
+
+### `bool = arePointsCollinear(a, b, c)`
+
+Returns true if the 2D points `a`, `b` and `c` are all collinear.
+
+<a name="removeDuplicatePoints"></a>
+
+### `newLine = removeDuplicatePoints(polyline)`
+
+For the given 2D `polyline` (array of 2D array coordinates), removes duplicate adjacent points (at almost the same coordinate, accounting for floating point precision).
 
 ## 
 

@@ -6,6 +6,7 @@ var svgPathParse = require('parse-svg-path');
 var svgPathAbs = require('abs-svg-path');
 var svgPathArcs = require('normalize-svg-path');
 var clone = require('clone');
+var optimizer = require('./lib/optimize-penplot-paths');
 
 var DEFAULT_PEN_THICKNESS = 0.03;
 var DEFAULT_PEN_THICKNESS_UNIT = 'cm';
@@ -82,22 +83,56 @@ function pathsToSVG (inputs, opt) {
     throw new Error('Must specify "width" and "height" options');
   }
 
-  var units = opt.units || 'px';
+  var viewUnits = 'px';
+  var units = opt.units || viewUnits;
 
   var convertOptions = {
     units: units,
+    viewUnits: 'px',
     roundPixel: false,
     precision: defined(opt.precision, 5),
     pixelsPerInch: DEFAULT_PIXELS_PER_INCH
   };
 
+  // Convert all SVGPaths/paths/etc to polylines, this won't change
+  // the path units.
+  // We need to do this to be able to then convert lines into view units,
+  // but it means we lose some arc/curve information for AxiDraw
+  inputs = pathsToPolylines(inputs, Object.assign({}, convertOptions, {
+    curveResolution: opt.curveResolution || undefined
+  }));
+
+  // TODO: allow for 'repeat' option
+
+  if (opt.optimize) {
+    var optimizeOpts = typeof opt.optimize === 'object' ? opt.optimize : {
+      sort: true,
+      merge: true,
+      removeDuplicates: true,
+      removeCollinear: true
+    };
+    var shouldSort = optimizeOpts.sort !== false;
+    var shouldMerge = optimizeOpts.merge !== false;
+    // now do sorting & merging
+    if (shouldSort) inputs = optimizer.sort(inputs);
+    if (shouldMerge) {
+      var mergeThreshold = optimizeOpts.mergeThreshold != null
+        ? optimizeOpts.mergeThreshold
+        : convert(0.25, 'mm', units, convertOptions);
+      inputs = optimizer.merge(inputs, mergeThreshold);
+    }
+  }
+
+  // now we convert all polylines in user space units
   var svgPaths = pathsToSVGPaths(inputs, convertOptions);
 
-  var viewWidth = convert(width, units, 'px', convertOptions).toString();
-  var viewHeight = convert(height, units, 'px', convertOptions).toString();
+  var viewWidth = convert(width, units, viewUnits, convertOptions).toString();
+  var viewHeight = convert(height, units, viewUnits, convertOptions).toString();
   var fillStyle = opt.fillStyle || 'none';
   var strokeStyle = opt.strokeStyle || 'black';
   var lineWidth = opt.lineWidth;
+  var lineJoin = opt.lineJoin;
+  var lineCap = opt.lineCap;
 
   // Choose a default line width based on a relatively fine-tip pen
   if (typeof lineWidth === 'undefined') {
@@ -106,7 +141,17 @@ function pathsToSVG (inputs, opt) {
   }
 
   var pathElements = svgPaths.map(function (d) {
-    return '    <path d="' + d + '" fill="' + fillStyle + '" stroke="' + strokeStyle + '" stroke-width="' + lineWidth + units + '" />';
+    var attrs = [
+      [ 'd', d ],
+      [ 'fill', fillStyle ],
+      [ 'stroke', strokeStyle ],
+      [ 'stroke-width', lineWidth + '' + units ],
+      lineJoin ? [ 'stroke-linejoin', lineJoin ] : false,
+      lineCap ? [ 'stroke-linecap', lineCap ] : false
+    ].filter(Boolean).map(function (attr) {
+      return attr[0] + '="' + attr[1] + '"';
+    }).join(' ');
+    return '    <path ' + attrs + ' />';
   }).join('\n');
 
   return [
@@ -156,8 +201,8 @@ function renderPaths (inputs, opt) {
 
   context.strokeStyle = opt.foreground || opt.strokeStyle || 'black';
   context.lineWidth = lineWidth;
-  context.lineJoin = opt.lineJoin || 'round';
-  context.lineCap = opt.lineCap || 'round';
+  context.lineJoin = opt.lineJoin || 'miter';
+  context.lineCap = opt.lineCap || 'butt';
 
   // Draw lines
   eachPath(inputs, function (feature) {
@@ -257,7 +302,7 @@ module.exports.polylineToSVGPath = polylineToSVGPath;
 function polylineToSVGPath (polyline, opt) {
   opt = opt || {};
   var units = opt.units || 'px';
-
+  var viewUnits = opt.viewUnits || units;
   var commands = [];
   var convertOptions = {
     roundPixel: false,
@@ -266,8 +311,8 @@ function polylineToSVGPath (polyline, opt) {
   };
   polyline.forEach(function (point, j) {
     var type = (j === 0) ? 'M' : 'L';
-    var x = convert(point[0], units, 'px', convertOptions).toString();
-    var y = convert(point[1], units, 'px', convertOptions).toString();
+    var x = convert(point[0], units, viewUnits, convertOptions).toString();
+    var y = convert(point[1], units, viewUnits, convertOptions).toString();
     commands.push(type + x + ' ' + y);
   });
   return commands.join(' ');

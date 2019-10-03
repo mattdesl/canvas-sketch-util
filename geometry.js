@@ -1,4 +1,66 @@
 var lineclip = require('lineclip');
+var almostEqual = require('almost-equal');
+var arrayAlmostEqual = require('array-almost-equal');
+var clone = require('clone');
+var squaredDistance = require('./lib/vec2').squaredDistance;
+
+module.exports.arePointsCollinear = function (point0, point1, point2) {
+  var x0 = point0[0];
+  var y0 = point0[1];
+  var x1 = point1[0];
+  var y1 = point1[1];
+  var x2 = point2[0];
+  var y2 = point2[1];
+  return almostEqual((y0 - y1) * (x0 - x2), (y0 - y2) * (x0 - x1));
+};
+
+module.exports.removeDuplicatePoints = function (path) {
+  var newPath = [];
+  var lastPoint;
+  for (var i = 0; i < path.length; i++) {
+    var curPoint = path[i];
+    if (!lastPoint || !arrayAlmostEqual(lastPoint, curPoint)) {
+      newPath.push(curPoint);
+      lastPoint = curPoint;
+    }
+  }
+  return clone(newPath);
+};
+
+module.exports.removeCollinearPoints = function (path) {
+  var newPath = [];
+  var remainingPoints = clone(path);
+  while (remainingPoints.length >= 3) {
+    var p0 = remainingPoints[0];
+    var p1 = remainingPoints[1];
+    var p2 = remainingPoints[2];
+    var collinear = module.exports.arePointsCollinear(p0, p1, p2);
+    // one more check is to ensure that points are in a line:
+    // A->B->C
+    // not A->C->B or some variant
+    if (collinear) {
+      var distAB = squaredDistance(p0, p1);
+      var distAC = squaredDistance(p0, p2);
+      if (distAB > distAC) collinear = false;
+    }
+    if (collinear) {
+      // the first 3 points are collinear
+      // remove the second point as it isn't needed
+      remainingPoints.splice(1, 1);
+    } else {
+      // the 3 points are not collinear
+      // add the first one as the others may still be collinear
+      for (var i = 0; i < 1; i++) {
+        newPath.push(remainingPoints.shift());
+      }
+    }
+  }
+  // add any remaining points
+  while (remainingPoints.length) {
+    newPath.push(remainingPoints.shift());
+  }
+  return newPath;
+};
 
 module.exports.clipSegmentToCircle = require('./lib/clip/clip-segment-to-circle');
 module.exports.clipLineToCircle = require('./lib/clip/clip-line-to-circle');
@@ -91,24 +153,21 @@ function createHatchLines (bounds, angle, spacing, out) {
   return out;
 }
 
-// TODO: N-Dimensional bounding box computation
-// module.exports.getBounds = function computePolylineBounds (polylines) {
-//   var minX = Infinity;
-//   var minY = Infinity;
-//   var maxX = -Infinity;
-//   var maxY = -Infinity;
-//   for (var i = 0; i < polylines.length; i++) {
-//     var path = polylines[i];
-//     for (var p = 0; p < path.length; p++) {
-//       var point = path[p];
-//       if (point[0] < minX) minX = point[0];
-//       if (point[1] < minY) minY = point[1];
-//       if (point[0] > maxX) maxX = point[0];
-//       if (point[1] > maxY) maxY = point[1];
-//     }
-//   }
-//   return {
-//     min: [ minX, minY ],
-//     max: [ maxX, maxY ]
-//   };
-// }
+module.exports.getBounds = function getBounds (points) {
+  var n = points.length;
+  if (n === 0) {
+    throw new Error('Expected points to be a non-empty array');
+  }
+  var d = points[0].length;
+  var lo = points[0].slice();
+  var hi = points[0].slice();
+  for (var i = 1; i < n; ++i) {
+    var p = points[i];
+    for (var j = 0; j < d; ++j) {
+      var x = p[j];
+      lo[j] = Math.min(lo[j], x);
+      hi[j] = Math.max(hi[j], x);
+    }
+  }
+  return [ lo, hi ];
+};

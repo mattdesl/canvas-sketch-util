@@ -6,7 +6,7 @@
 
 A set of utilities around pen plotting with the [AxiDraw V3](https://shop.evilmadscientist.com/productsmenu/846). This is ideally used alongside [canvas-sketch](https://github.com/mattdesl/canvas-sketch) CLI tools for exporting SVG files.
 
-This tool allows you to create arbitrary "path" instances using familiar Canvas2D APIs, and then serialize these as a complete SVG that should be plottable.
+This tool allows you to create arbitrary "path" instances using familiar Canvas2D APIs, and then serialize these as a complete SVG that should be plottable. In this utility, a "path" can be a polyline, Path instance, or SVGPath string.
 
 ### Example
 
@@ -95,16 +95,16 @@ pathsToPolylines(inputs).forEach(contour => {
 });
 ```
 
-You can specify `{ curveResolution }` option (a number) to adjust the smoothness when converting SVG paths into discrete polyline lists. By default, a reasonable default will be selected from your `{ units }` option. For example:
+You can specify `{ curveResolution }` option (a number) to adjust the smoothness when converting SVG paths into discrete polyline lists. The number is the inverse of the distance threshold to further subdivide curves, a higher resolution leads to more subdivisions. By default, a reasonable default will be selected from your `{ units }` option (4 units converted to pixels at 96 DPI). For example:
 
 ```js
-// Use a resolution of 3
-pathsToPolylines(inputs, { curveResolution: 3 });
+// Use a resolution of 1
+pathsToPolylines(inputs, { curveResolution: 1 });
 
 // Choose a reasonable default resolution based on units
 pathsToPolylines(inputs, { units: 'cm' });
 
-// No options specified, will default to a resolution of 1.0
+// No options specified, will default to a resolution of 4
 pathsToPolylines(inputs);
 ```
 
@@ -123,6 +123,7 @@ Options:
 - `strokeStyle` (defaults to `'black'`) the color of the strokes
 - `precision` (defaults to 5) the decimal precision for floating point numbers as they are converted to strings
 - `fillStyle` (defaults to `'none'`) the fill style of SVG path elements
+- `curveResolution` (defaults to a reasonable smoothness) the resolution when converting SVG paths into discrete arcs, see [pathsToPolylines](#pathsToPolylines) for details
 
 Returns a string of the SVG file.
 
@@ -155,7 +156,7 @@ const settings = {
 const sketch = ({ width, height }) => {
   // Create shapes with path interface
   const shape0 = createPath(ctx => ctx.arc(0, 0, 50, 0, Math.PI * 2));
-  // And/or with polylines
+  // And/or with polylines or plain SVGStrings, e.g. from a .svg file
   const shape1 = [ [ 0, 0 ], [ 50, 25 ] ];
   // Combine into an array or nested array
   const paths = [ shape0, shape1 ];
