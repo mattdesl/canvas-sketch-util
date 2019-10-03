@@ -5,8 +5,8 @@ var svgPathContours = require('svg-path-contours');
 var svgPathParse = require('parse-svg-path');
 var svgPathAbs = require('abs-svg-path');
 var svgPathArcs = require('normalize-svg-path');
-var clone = require('clone');
 var optimizer = require('./lib/optimize-penplot-paths');
+var geometry = require('./geometry');
 
 var DEFAULT_PEN_THICKNESS = 0.03;
 var DEFAULT_PEN_THICKNESS_UNIT = 'cm';
@@ -65,7 +65,11 @@ function pathsToPolylines (inputs, opt) {
         contours.push(subContour);
       });
     } else {
-      contours.push(clone(feature));
+      // output only 2D polylines
+      var polyline = feature.map(function (point) {
+        return [ point[0] || 0, point[1] || 0 ];
+      });
+      contours.push(polyline);
     }
   });
   return contours;
@@ -94,16 +98,13 @@ function pathsToSVG (inputs, opt) {
     pixelsPerInch: DEFAULT_PIXELS_PER_INCH
   };
 
-  // Convert all SVGPaths/paths/etc to polylines, this won't change
-  // the path units.
-  // We need to do this to be able to then convert lines into view units,
-  // but it means we lose some arc/curve information for AxiDraw
+  // Convert all SVGPaths/paths/etc to polylines
+  // This won't change their units so they are still in user space
   inputs = pathsToPolylines(inputs, Object.assign({}, convertOptions, {
     curveResolution: opt.curveResolution || undefined
   }));
 
   // TODO: allow for 'repeat' option
-
   if (opt.optimize) {
     var optimizeOpts = typeof opt.optimize === 'object' ? opt.optimize : {
       sort: true,
@@ -113,17 +114,31 @@ function pathsToSVG (inputs, opt) {
     };
     var shouldSort = optimizeOpts.sort !== false;
     var shouldMerge = optimizeOpts.merge !== false;
+    var shouldRemoveDuplicate = optimizeOpts.removeDuplicates !== false;
+    var shouldRemoveCollinear = optimizeOpts.removeCollinear !== false;
+    if (shouldRemoveDuplicate) {
+      inputs = inputs.map(function (line) {
+        return geometry.removeDuplicatePoints(line);
+      });
+    }
+    if (shouldRemoveCollinear) {
+      inputs = inputs.map(function (line) {
+        return geometry.removeCollinearPoints(line);
+      });
+    }
     // now do sorting & merging
     if (shouldSort) inputs = optimizer.sort(inputs);
     if (shouldMerge) {
       var mergeThreshold = optimizeOpts.mergeThreshold != null
         ? optimizeOpts.mergeThreshold
-        : convert(0.25, 'mm', units, convertOptions);
+        : convert(0.25, 'mm', units, {
+          pixelsPerInch: DEFAULT_PIXELS_PER_INCH
+        });
       inputs = optimizer.merge(inputs, mergeThreshold);
     }
   }
 
-  // now we convert all polylines in user space units
+  // now we convert all polylines in user space units into view units
   var svgPaths = pathsToSVGPaths(inputs, convertOptions);
 
   var viewWidth = convert(width, units, viewUnits, convertOptions).toString();
@@ -141,18 +156,19 @@ function pathsToSVG (inputs, opt) {
   }
 
   var pathElements = svgPaths.map(function (d) {
-    var attrs = [
-      [ 'd', d ],
-      [ 'fill', fillStyle ],
-      [ 'stroke', strokeStyle ],
-      [ 'stroke-width', lineWidth + '' + units ],
-      lineJoin ? [ 'stroke-linejoin', lineJoin ] : false,
-      lineCap ? [ 'stroke-linecap', lineCap ] : false
-    ].filter(Boolean).map(function (attr) {
-      return attr[0] + '="' + attr[1] + '"';
-    }).join(' ');
+    var attrs = toAttrList([
+      [ 'd', d ]
+    ]);
     return '    <path ' + attrs + ' />';
   }).join('\n');
+
+  var groupAttrs = toAttrList([
+    [ 'fill', fillStyle ],
+    [ 'stroke', strokeStyle ],
+    [ 'stroke-width', lineWidth + '' + units ],
+    lineJoin ? [ 'stroke-linejoin', lineJoin ] : false,
+    lineCap ? [ 'stroke-linecap', lineCap ] : false
+  ]);
 
   return [
     '<?xml version="1.0" standalone="no"?>',
@@ -160,11 +176,17 @@ function pathsToSVG (inputs, opt) {
     '    "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">',
     '<svg width="' + width + units + '" height="' + height + units + '"',
     '    xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 ' + viewWidth + ' ' + viewHeight + '">',
-    '  <g>',
+    '  <g ' + groupAttrs + '>',
     pathElements,
     '  </g>',
     '</svg>'
   ].join('\n');
+}
+
+function toAttrList (args) {
+  return args.filter(Boolean).map(function (attr) {
+    return attr[0] + '="' + attr[1] + '"';
+  }).join(' ');
 }
 
 module.exports.renderPaths = renderPaths;

@@ -35,7 +35,9 @@ const svg = pathsToSVG([ path0, path1 ], {
   width: 2,
   height: 2,
   units: 'cm',
-  lineWidth: 0.04
+  lineWidth: 0.04,
+  // optimize the SVG output for pen plotter use
+  optimize: true
 });
 ```
 
@@ -124,6 +126,12 @@ Options:
 - `precision` (defaults to 5) the decimal precision for floating point numbers as they are converted to strings
 - `fillStyle` (defaults to `'none'`) the fill style of SVG path elements
 - `curveResolution` (defaults to a reasonable smoothness) the resolution when converting SVG paths into discrete arcs, see [pathsToPolylines](#pathsToPolylines) for details
+- `optimize` (defaults to false) if true, enables path sorting for optimal traversal distance and merging end-points to reduce pen lifts. Can also specify an object instead of a boolean:
+  - `optimize.sort` (default true) – can disable distance sorting
+  - `optimize.removeDuplicates` (default true) – remove duplicaet adjacent points (before merging)
+  - `optimize.removeCollinear` (default true) – remove unnecessary collinear adjacent points within lines
+  - `optimize.merge` (default true) – can disable end point merging
+  - `optimize.mergeThreshold` (default 0.25 mm in your units) – adjsut the distance threshold at which to merge end points
 
 Returns a string of the SVG file.
 

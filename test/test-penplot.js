@@ -18,8 +18,8 @@ test('should return a physical SVG', t => {
     "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
 <svg width="5px" height="5px"
     xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 5 5">
-  <g>
-    <path d="M0 0 L2 3 L2 1" fill="none" stroke="black" stroke-width="1.06299px" />
+  <g fill="none" stroke="black" stroke-width="1.06299px">
+    <path d="M0 0 L2 3 L2 1" />
   </g>
 </svg>`.trim());
 
@@ -37,8 +37,8 @@ test('should return a physical SVG', t => {
     "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
 <svg width="5cm" height="5cm"
     xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 177.16535 177.16535">
-  <g>
-    <path d="M0 0 L70.86614 106.29921 L70.86614 35.43307" fill="none" stroke="black" stroke-width="0.03cm" />
+  <g fill="none" stroke="black" stroke-width="0.03cm">
+    <path d="M0 0 L70.86614 106.29921 L70.86614 35.43307" />
   </g>
 </svg>`.trim());
 
@@ -56,8 +56,8 @@ test('should return a physical SVG', t => {
     "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
 <svg width="5in" height="5in"
     xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 450 450">
-  <g>
-    <path d="M0 0 L180 270 L180 90" fill="none" stroke="black" stroke-width="0.01181in" />
+  <g fill="none" stroke="black" stroke-width="0.01181in">
+    <path d="M0 0 L180 270 L180 90" />
   </g>
 </svg>`.trim());
 
@@ -77,8 +77,8 @@ test('should return a physical SVG', t => {
     "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
 <svg width="5in" height="5in"
     xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 450 450">
-  <g>
-    <path d="M0 0 L180 270 L180 90" fill="none" stroke="blue" stroke-width="1in" />
+  <g fill="none" stroke="blue" stroke-width="1in">
+    <path d="M0 0 L180 270 L180 90" />
   </g>
 </svg>`.trim());
   t.end();
@@ -180,9 +180,9 @@ test('should handle paths', t => {
     "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
 <svg width="5cm" height="5cm"
     xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 177.16535 177.16535">
-  <g>
-    <path d="M0 0 L0.10165 0.10165 L0.87588 0.87588 L2.32486 2.32486 L4.34479 4.34479 L8.21812 8.21812 L14.41199 14.41199 L21.02108 21.02108 L27.21495 27.21495 L31.08828 31.08828 L33.10821 33.10821 L34.55719 34.55719 L35.33143 35.33143 L35.43307 35.43307" fill="none" stroke="black" stroke-width="0.03cm" />
-    <path d="M35.43307 35.43307 L35.53472 35.53472 L36.30895 36.30895 L37.75793 37.75793 L39.77786 39.77786 L43.65119 43.65119 L49.84506 49.84506 L56.45416 56.45416 L62.64802 62.64802 L66.52135 66.52135 L68.54128 68.54128 L69.99026 69.99026 L70.7645 70.7645 L70.86614 70.86614" fill="none" stroke="black" stroke-width="0.03cm" />
+  <g fill="none" stroke="black" stroke-width="0.03cm">
+    <path d="M0 0 L0.10165 0.10165 L0.87588 0.87588 L2.32486 2.32486 L4.34479 4.34479 L8.21812 8.21812 L14.41199 14.41199 L21.02108 21.02108 L27.21495 27.21495 L31.08828 31.08828 L33.10821 33.10821 L34.55719 34.55719 L35.33143 35.33143 L35.43307 35.43307" />
+    <path d="M35.43307 35.43307 L35.53472 35.53472 L36.30895 36.30895 L37.75793 37.75793 L39.77786 39.77786 L43.65119 43.65119 L49.84506 49.84506 L56.45416 56.45416 L62.64802 62.64802 L66.52135 66.52135 L68.54128 68.54128 L69.99026 69.99026 L70.7645 70.7645 L70.86614 70.86614" />
   </g>
 </svg>`.trim());
 

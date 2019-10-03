@@ -85,6 +85,16 @@ test('should remove collinearity', t => {
   ]);
 
   t.deepEqual(geometry.removeCollinearPoints([
+    [ 0, 0 ],
+    [ 1, 0 ],
+    [ 2, 0 ],
+    [ 3, 0 ]
+  ]), [
+    [ 0, 0 ],
+    [ 3, 0 ]
+  ]);
+
+  t.deepEqual(geometry.removeCollinearPoints([
     [ 1, 1 ],
     [ 0, 0 ],
     [ 0.5, 0 ],
