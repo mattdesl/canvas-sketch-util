@@ -83,11 +83,9 @@ function pathsToSVG (inputs, opt) {
 module.exports.groupsToSVG = groupsToSVG;
 function groupsToSVG (groups, opt) {
   opt = opt || {groups:true};
-  //groups = [] of {id: paths: options:}
 
   var width = opt.width;
   var height = opt.height;
-
 
   var computeBounds = typeof width === 'undefined' || typeof height === 'undefined';
   if (computeBounds) {
@@ -113,7 +111,6 @@ function groupsToSVG (groups, opt) {
   groups.forEach((group, index) => {
     let inputs = group;
     let groupId = `${index +1}-group`;
-    opt = {...opt, ... group.options}; 
   
     // Convert all SVGPaths/paths/etc to polylines
     // This won't change their units so they are still in user space
