@@ -298,16 +298,16 @@ function createRandom (defaultSeed) {
     return 0;
   }
 
-  function gaussian (mean, standardDerivation) {
+  function gaussian (mean, standardDeviation) {
     mean = defined(mean, 0);
-    standardDerivation = defined(standardDerivation, 1);
+    standardDeviation = defined(standardDeviation, 1);
 
     // https://github.com/openjdk-mirror/jdk7u-jdk/blob/f4d80957e89a19a29bb9f9807d2a28351ed7f7df/src/share/classes/java/util/Random.java#L496
     if (_hasNextGaussian) {
       _hasNextGaussian = false;
       var result = _nextGaussian;
       _nextGaussian = null;
-      return mean + standardDerivation * result;
+      return mean + standardDeviation * result;
     } else {
       var v1 = 0;
       var v2 = 0;
@@ -320,7 +320,7 @@ function createRandom (defaultSeed) {
       var multiplier = Math.sqrt(-2 * Math.log(s) / s);
       _nextGaussian = (v2 * multiplier);
       _hasNextGaussian = true;
-      return mean + standardDerivation * (v1 * multiplier);
+      return mean + standardDeviation * (v1 * multiplier);
     }
   }
 }
