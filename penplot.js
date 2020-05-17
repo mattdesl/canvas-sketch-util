@@ -221,28 +221,33 @@ function renderPaths (inputs, opt) {
   context.fillStyle = opt.background || 'white';
   context.fillRect(0, 0, width, height);
 
-  context.strokeStyle = opt.foreground || opt.strokeStyle || 'black';
-  context.lineWidth = lineWidth;
-  context.lineJoin = opt.lineJoin || 'miter';
-  context.lineCap = opt.lineCap || 'butt';
   inputs = opt.layer === true ? inputs : [inputs];
 
-  // Draw lines
-  eachPath(inputs, function (feature) {
-    context.beginPath();
+  for (let i = 0; i < inputs.length; i++) {
 
-    if (typeof feature === 'string') {
-      // SVG string = drawSVGPath;
-      drawSVGPath(context, feature);
-    } else {
-      // list of points
-      feature.forEach(function (p) {
-        context.lineTo(p[0], p[1]);
-      });
-    }
+    context.save();
+    context.strokeStyle = opt.layerProps && opt.layerProps[i].strokeStyle || opt.strokeStyle || 'black';
+    context.lineWidth = opt.layerProps && opt.layerProps[i].lineWidth || lineWidth;
+    context.lineJoin = opt.layerProps && opt.layerProps[i].lineJoin || opt.lineJoin || 'miter';
+    context.lineCap = opt.layerProps && opt.layerProps[i].lineCap || opt.lineCap || 'butt';
 
-    context.stroke();
-  });
+    eachPath(inputs[i], function (feature) {
+      context.beginPath();
+
+      if (typeof feature === 'string') {
+        // SVG string = drawSVGPath;
+        drawSVGPath(context, feature);
+      } else {
+        // list of points
+        feature.forEach(function (p) {
+          context.lineTo(p[0], p[1]);
+        });
+      }
+
+      context.stroke();
+    });
+    context.restore();
+  }
 
   // Save layers
   return [
