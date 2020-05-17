@@ -225,6 +225,7 @@ function renderPaths (inputs, opt) {
   context.lineWidth = lineWidth;
   context.lineJoin = opt.lineJoin || 'miter';
   context.lineCap = opt.lineCap || 'butt';
+  inputs = opt.layer === true ? inputs : [inputs];
 
   // Draw lines
   eachPath(inputs, function (feature) {
