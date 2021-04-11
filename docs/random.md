@@ -13,7 +13,7 @@ By default, random values are not deterministic, but if you set a seed with `set
 ```js
 const random = require('canvas-sketch-util/random');
 
-// Random betwee 0 (inclusive) and 1 (exclusive)
+// Random between 0 (inclusive) and 1 (exclusive)
 const r = random.value();
 
 // Random 2D point on unit circle
