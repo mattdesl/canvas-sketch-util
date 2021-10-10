@@ -192,7 +192,7 @@ The returned output is stored in `out` array, or if no parameter is given, a new
 
 <a name="mapRange"></a>
 
-### `n = mapRange(value, inputMin, inputMax, ouptutMin, outputMax, clamp = false)`
+### `n = mapRange(value, inputMin, inputMax, outputMin, outputMax, clamp = false)`
 
 Maps the *value* from one range of `[inputMin..inputMax]` to another range of `[outputMin..outputMax]`, with min/max being inclusive. By default, *value* is not clamped, but you can specify `clamp` as true to clamp the output within `outputMin` and `outputMax`.
 
