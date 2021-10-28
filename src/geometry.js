@@ -2,7 +2,7 @@ var lineclip = require('lineclip');
 var almostEqual = require('almost-equal');
 var arrayAlmostEqual = require('array-almost-equal');
 var clone = require('clone');
-var squaredDistance = require('./lib/vec2').squaredDistance;
+var squaredDistance = require('../lib/vec2').squaredDistance;
 
 module.exports.arePointsCollinear = function (point0, point1, point2) {
   var x0 = point0[0];
@@ -62,8 +62,8 @@ module.exports.removeCollinearPoints = function (path) {
   return newPath;
 };
 
-module.exports.clipSegmentToCircle = require('./lib/clip/clip-segment-to-circle');
-module.exports.clipLineToCircle = require('./lib/clip/clip-line-to-circle');
+module.exports.clipSegmentToCircle = require('../lib/clip/clip-segment-to-circle');
+module.exports.clipLineToCircle = require('../lib/clip/clip-line-to-circle');
 
 module.exports.clipPolylinesToBox = function (polylines, bbox, border, closeLines) {
   if (!Array.isArray(bbox) || (bbox.length !== 2 && bbox.length !== 4)) {

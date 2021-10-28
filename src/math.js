@@ -1,5 +1,5 @@
 var defined = require('defined');
-var wrap = require('./lib/wrap');
+var wrap = require('../lib/wrap');
 var EPSILON = Number.EPSILON;
 
 function clamp (value, min, max) {
