@@ -111,6 +111,10 @@ function groupsToSVG (groups, opt) {
   groups.forEach((group, index) => {
     let inputs = group;
     let groupId = `${index +1}-group`;
+    if (opt.groupnames && opt.groupnames.length > index && opt.groupnames[index]) {
+      groupId = opt.groupnames[index];
+    }
+    
   
     // Convert all SVGPaths/paths/etc to polylines
     // This won't change their units so they are still in user space
