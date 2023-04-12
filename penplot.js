@@ -77,7 +77,12 @@ function pathsToPolylines (inputs, opt) {
 
 module.exports.pathsToSVG = pathsToSVG;
 function pathsToSVG (inputs, opt) {
-  opt = opt || {};
+  return groupsToSVG([inputs], opt);
+}
+
+module.exports.groupsToSVG = groupsToSVG;
+function groupsToSVG (groups, opt) {
+  opt = opt || {groups:true};
 
   var width = opt.width;
   var height = opt.height;
@@ -98,77 +103,95 @@ function pathsToSVG (inputs, opt) {
     pixelsPerInch: DEFAULT_PIXELS_PER_INCH
   };
 
-  // Convert all SVGPaths/paths/etc to polylines
-  // This won't change their units so they are still in user space
-  inputs = pathsToPolylines(inputs, Object.assign({}, convertOptions, {
-    curveResolution: opt.curveResolution || undefined
-  }));
-
-  // TODO: allow for 'repeat' option
-  if (opt.optimize) {
-    var optimizeOpts = typeof opt.optimize === 'object' ? opt.optimize : {
-      sort: true,
-      merge: true,
-      removeDuplicates: true,
-      removeCollinear: true
-    };
-    var shouldSort = optimizeOpts.sort !== false;
-    var shouldMerge = optimizeOpts.merge !== false;
-    var shouldRemoveDuplicate = optimizeOpts.removeDuplicates !== false;
-    var shouldRemoveCollinear = optimizeOpts.removeCollinear !== false;
-    if (shouldRemoveDuplicate) {
-      inputs = inputs.map(function (line) {
-        return geometry.removeDuplicatePoints(line);
-      });
-    }
-    if (shouldRemoveCollinear) {
-      inputs = inputs.map(function (line) {
-        return geometry.removeCollinearPoints(line);
-      });
-    }
-    // now do sorting & merging
-    if (shouldSort) inputs = optimizer.sort(inputs);
-    if (shouldMerge) {
-      var mergeThreshold = optimizeOpts.mergeThreshold != null
-        ? optimizeOpts.mergeThreshold
-        : convert(0.25, 'mm', units, {
-          pixelsPerInch: DEFAULT_PIXELS_PER_INCH
-        });
-      inputs = optimizer.merge(inputs, mergeThreshold);
-    }
-  }
-
-  // now we convert all polylines in user space units into view units
-  var svgPaths = pathsToSVGPaths(inputs, convertOptions);
-
   var viewWidth = convert(width, units, viewUnits, convertOptions).toString();
   var viewHeight = convert(height, units, viewUnits, convertOptions).toString();
-  var fillStyle = opt.fillStyle || 'none';
-  var strokeStyle = opt.strokeStyle || 'black';
-  var lineWidth = opt.lineWidth;
-  var lineJoin = opt.lineJoin;
-  var lineCap = opt.lineCap;
 
-  // Choose a default line width based on a relatively fine-tip pen
-  if (typeof lineWidth === 'undefined') {
-    // Convert to user units
-    lineWidth = convert(DEFAULT_PEN_THICKNESS, DEFAULT_PEN_THICKNESS_UNIT, units, convertOptions).toString();
-  }
+  let groupElements = [];
 
-  var pathElements = svgPaths.map(function (d) {
-    var attrs = toAttrList([
-      [ 'd', d ]
+  groups.forEach((group, index) => {
+    let inputs = group;
+    let groupId = `${index +1}-group`;
+    if (opt.groupnames && opt.groupnames.length > index && opt.groupnames[index]) {
+      groupId = opt.groupnames[index];
+    }
+    
+  
+    // Convert all SVGPaths/paths/etc to polylines
+    // This won't change their units so they are still in user space
+    inputs = pathsToPolylines(inputs, Object.assign({}, convertOptions, {
+      curveResolution: opt.curveResolution || undefined
+    }));
+
+    // TODO: allow for 'repeat' option
+    if (opt.optimize) {
+      var optimizeOpts = typeof opt.optimize === 'object' ? opt.optimize : {
+        sort: true,
+        merge: true,
+        removeDuplicates: true,
+        removeCollinear: true
+      };
+      var shouldSort = optimizeOpts.sort !== false;
+      var shouldMerge = optimizeOpts.merge !== false;
+      var shouldRemoveDuplicate = optimizeOpts.removeDuplicates !== false;
+      var shouldRemoveCollinear = optimizeOpts.removeCollinear !== false;
+      if (shouldRemoveDuplicate) {
+        inputs = inputs.map(function (line) {
+          return geometry.removeDuplicatePoints(line);
+        });
+      }
+      if (shouldRemoveCollinear) {
+        inputs = inputs.map(function (line) {
+          return geometry.removeCollinearPoints(line);
+        });
+      }
+      // now do sorting & merging
+      if (shouldSort) inputs = optimizer.sort(inputs);
+      if (shouldMerge) {
+        var mergeThreshold = optimizeOpts.mergeThreshold != null
+          ? optimizeOpts.mergeThreshold
+          : convert(0.25, 'mm', units, {
+            pixelsPerInch: DEFAULT_PIXELS_PER_INCH
+          });
+        inputs = optimizer.merge(inputs, mergeThreshold);
+      }
+    }
+
+    // now we convert all polylines in user space units into view units
+    var svgPaths = pathsToSVGPaths(inputs, convertOptions);
+    var fillStyle = opt.fillStyle || 'none';
+    var strokeStyle = opt.strokeStyle || 'black';
+    var lineWidth = opt.lineWidth;
+    var lineJoin = opt.lineJoin;
+    var lineCap = opt.lineCap;
+
+    // Choose a default line width based on a relatively fine-tip pen
+    if (typeof lineWidth === 'undefined') {
+      // Convert to user units
+      lineWidth = convert(DEFAULT_PEN_THICKNESS, DEFAULT_PEN_THICKNESS_UNIT, units, convertOptions).toString();
+    }
+
+    var pathElements = svgPaths.map(function (d) {
+      var attrs = toAttrList([
+        [ 'd', d ]
+      ]);
+      return '    <path ' + attrs + ' />';
+    }).join('\n');
+
+    var groupAttrs = toAttrList([
+      ['id', groupId],
+      [ 'fill', fillStyle ],
+      [ 'stroke', strokeStyle ],
+      [ 'stroke-width', lineWidth + '' + units ],
+      lineJoin ? [ 'stroke-linejoin', lineJoin ] : false,
+      lineCap ? [ 'stroke-linecap', lineCap ] : false
     ]);
-    return '    <path ' + attrs + ' />';
-  }).join('\n');
 
-  var groupAttrs = toAttrList([
-    [ 'fill', fillStyle ],
-    [ 'stroke', strokeStyle ],
-    [ 'stroke-width', lineWidth + '' + units ],
-    lineJoin ? [ 'stroke-linejoin', lineJoin ] : false,
-    lineCap ? [ 'stroke-linecap', lineCap ] : false
-  ]);
+    groupElements.push([
+      '  <g ' + groupAttrs + '>',
+    pathElements,
+    '  </g>',
+    ].join('\n'));
+  });
 
   return [
     '<?xml version="1.0" standalone="no"?>',
@@ -176,9 +199,7 @@ function pathsToSVG (inputs, opt) {
     '    "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">',
     '<svg width="' + width + units + '" height="' + height + units + '"',
     '    xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 ' + viewWidth + ' ' + viewHeight + '">',
-    '  <g ' + groupAttrs + '>',
-    pathElements,
-    '  </g>',
+    groupElements,
     '</svg>'
   ].join('\n');
 }
@@ -189,8 +210,35 @@ function toAttrList (args) {
   }).join(' ');
 }
 
+module.exports.renderGroups = renderGroups;
+function renderGroups (inputs, opt) {
+
+  return [
+    // Export PNG as first layer
+    renderPathsOnCanvas(inputs.flat(), opt),
+    // Export SVG for pen plotter as second layer
+    {
+      data: groupsToSVG(inputs, opt),
+      extension: '.svg'
+    }
+  ];
+}
+
 module.exports.renderPaths = renderPaths;
 function renderPaths (inputs, opt) {
+  // Save layers
+  return [
+    // Export PNG as first layer
+    renderPathsOnCanvas(inputs, opt),
+    // Export SVG for pen plotter as second layer
+    {
+      data: pathsToSVG(inputs, opt),
+      extension: '.svg'
+    }
+  ];
+}
+
+function renderPathsOnCanvas (inputs, opt) {
   opt = opt || {};
 
   var context = opt.context;
@@ -243,16 +291,7 @@ function renderPaths (inputs, opt) {
     context.stroke();
   });
 
-  // Save layers
-  return [
-    // Export PNG as first layer
-    context.canvas,
-    // Export SVG for pen plotter as second layer
-    {
-      data: pathsToSVG(inputs, opt),
-      extension: '.svg'
-    }
-  ];
+  return context.canvas;
 }
 
 // Not documented...
