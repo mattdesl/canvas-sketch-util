@@ -161,6 +161,7 @@ function pathsToSVG (inputs, opt) {
   var lineWidth = opt.lineWidth;
   var lineJoin = opt.lineJoin;
   var lineCap = opt.lineCap;
+  var exportForInkscape = opt.inkscape;
 
   // Choose a default line width based on a relatively fine-tip pen
   if (typeof lineWidth === 'undefined') {
@@ -189,29 +190,35 @@ function pathsToSVG (inputs, opt) {
     var groupLineJoin = Array.isArray(lineJoin) ? lineJoin[index] : lineJoin;
     var groupLineCap = Array.isArray(lineCap) ? lineCap[index] : lineCap;
     
-    // Set style and layer attributes (including Inkscape-specific attributes)
+    // Set style and layer attributes (including Inkscape-specific attributes, if requested)
     var groupName = (index + 1) + '-' + groupStroke;
     var groupAttrs = toAttrList([
       [ 'id', groupName ],
-      [ 'inkscape:label', groupName ],
-      [ 'inkscape:groupmode', 'layer' ],
       [ 'fill', groupFill ],
       [ 'stroke', groupStroke ],
       [ 'stroke-width', groupLineWidth + '' + units ],
       lineJoin ? [ 'stroke-linejoin', groupLineJoin ] : false,
       lineCap ? [ 'stroke-linecap', groupLineCap ] : false
-    ]);
+    ].concat(exportForInkscape ? [
+      [ 'inkscape:label', groupName ],
+      [ 'inkscape:groupmode', 'layer' ],
+    ] : []));
 
     return '  <g ' + groupAttrs + '>\n' + group + '\n  </g>';
   }).join('\n');
+
+  var namespaces = [
+    '    xmlns="http://www.w3.org/2000/svg" version="1.1" ',
+  ].concat(exportForInkscape ? [
+    '    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"'
+  ] : []).join('\n');
 
   return [
     '<?xml version="1.0" standalone="no"?>',
     '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" ',
     '    "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">',
     '<svg width="' + width + units + '" height="' + height + units + '"',
-    '    xmlns="http://www.w3.org/2000/svg" version="1.1" ',
-    '    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"',
+    namespaces,
     '    viewBox="0 0 ' + viewWidth + ' ' + viewHeight + '">',
     groupElements,
     '</svg>'
