@@ -114,7 +114,7 @@ pathsToPolylines(inputs);
 
 ### `svg = pathsToSVG(paths, opt)`
 
-Generates a physically-sized SVG file as a string from the given list of `paths` with the specified options in `opt`. The `paths` can be a single or multiple nested path instances, such as Path objects from `createPath`, or SVGPath strings, or polylines (nested 2D points using arrays).
+Generates a physically-sized SVG file as a string from the given list of `paths` with the specified options in `opt`. The `paths` can be a single or multiple nested path instances, such as Path objects from `createPath`, or SVGPath strings, or polylines (nested 2D points using arrays). The `paths` can also be and array of arrays of path instances, which will then be rendered (and exported) as groups within the resulting SVG data; in this case, style values within `opt` may also be specified as arrays, specifying separate styling for each group.
 
 Options:
 
@@ -141,7 +141,7 @@ The SVG is formatted in such a way that it can be easily opened and exported to 
 
 ### `layers = renderPaths(lines, props)`
 
-Renders the specified list of `lines` (each containing an array of 2D coordinates) using the specified `props` (expected to be from `canvas-sketch`), returning an array of renderable layers: `[ canvas, svgOutput ]`.
+Renders the specified list of `lines` (each containing an array of 2D coordinates) using the specified `props` (expected to be from `canvas-sketch`), returning an array of renderable layers: `[ canvas, svgOutput ]`. As in `pathsToSVG`, `lines` can also be an array of arrays, specifying a set of groups to render in the resulting SVG data.
 
 > :bulb: 
 > 
