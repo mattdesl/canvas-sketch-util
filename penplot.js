@@ -82,11 +82,11 @@ function pathsToSVG (inputs, opt) {
 }
 
 module.exports.groupsToSVG = groupsToSVG;
-function groupsToSVG (groups, opt) {
-  opt = opt || {groups:true};
+function groupsToSVG (groups, options) {
+  let globalOptions = options || {groups:true};
 
-  var width = opt.width;
-  var height = opt.height;
+  var width = globalOptions.width;
+  var height = globalOptions.height;
 
   var computeBounds = typeof width === 'undefined' || typeof height === 'undefined';
   if (computeBounds) {
@@ -94,13 +94,13 @@ function groupsToSVG (groups, opt) {
   }
 
   var viewUnits = 'px';
-  var units = opt.units || viewUnits;
+  var units = globalOptions.units || viewUnits;
 
   var convertOptions = {
     units: units,
     viewUnits: 'px',
     roundPixel: false,
-    precision: defined(opt.precision, 5),
+    precision: defined(globalOptions.precision, 5),
     pixelsPerInch: DEFAULT_PIXELS_PER_INCH
   };
 
@@ -110,10 +110,14 @@ function groupsToSVG (groups, opt) {
   let groupElements = [];
 
   groups.forEach((group, index) => {
+    let opt = globalOptions;
     let inputs = group;
     let groupId = `${index +1}-group`;
     if (opt.groupnames && opt.groupnames.length > index && opt.groupnames[index]) {
       groupId = opt.groupnames[index];
+    }
+    if (opt.groupoptions && opt.groupoptions.length > index && opt.groupoptions[index]) {
+      opt = { ...globalOptions, ...opt.groupoptions[index]};
     }
     
   
@@ -229,7 +233,7 @@ module.exports.renderGroupsWithText = renderGroupsWithText;
 function renderGroupsWithText (inputs, texts, opt) {
   return [
     // Export PNG as first layer
-    renderPathsAndTextOnCanvas(inputs.flat(), texts, opt),
+    renderGroupsAndTextOnCanvas(inputs, texts, opt),
     // Export SVG for pen plotter as second layer
     {
       data: groupsToSVG(inputs, opt),
@@ -252,44 +256,55 @@ function renderPaths (inputs, opt) {
   ];
 }
 
-function renderPathsAndTextOnCanvas (inputs, texts, opt) {
-  opt = opt || {};
+function renderGroupsAndTextOnCanvas (groups, texts, options) {
+  let globalOptions = options || {};
 
-  var context = opt.context;
+  var context = globalOptions.context;
   if (!context) throw new Error('Must specify "context" options');
 
-  var units = opt.units || 'px';
+  var units = globalOptions.units || 'px';
 
-  var width = opt.width;
-  var height = opt.height;
+  var width = globalOptions.width;
+  var height = globalOptions.height;
   if (typeof width === 'undefined' || typeof height === 'undefined') {
     throw new Error('Must specify "width" and "height" options');
   }
 
   // Choose a default line width based on a relatively fine-tip pen
-  var lineWidth = opt.lineWidth;
+  var lineWidth = globalOptions.lineWidth;
   if (typeof lineWidth === 'undefined') {
     // Convert to user units
     lineWidth = convert(DEFAULT_PEN_THICKNESS, DEFAULT_PEN_THICKNESS_UNIT, units, {
       roundPixel: false,
       pixelsPerInch: DEFAULT_PIXELS_PER_INCH
     });
+
   }
 
   // Clear canvas
   context.clearRect(0, 0, width, height);
 
   // Fill with white
-  context.fillStyle = opt.background || 'white';
+  context.fillStyle = globalOptions.background || 'white';
   context.fillRect(0, 0, width, height);
 
-  context.strokeStyle = opt.foreground || opt.strokeStyle || 'black';
+  context.strokeStyle = globalOptions.foreground || globalOptions.strokeStyle || 'black';
   context.lineWidth = lineWidth;
-  context.lineJoin = opt.lineJoin || 'miter';
-  context.lineCap = opt.lineCap || 'butt';
+  context.lineJoin = globalOptions.lineJoin || 'miter';
+  context.lineCap = globalOptions.lineCap || 'butt';
 
-  // Draw lines
-  eachPath(inputs, function (feature) {
+  groups.forEach((group, index) => {
+    let opt = globalOptions;
+    let inputs = group;
+
+    if (opt.groupoptions && opt.groupoptions.length > index && opt.groupoptions[index]) {
+      opt = { ...globalOptions, ...opt.groupoptions[index]};
+    }
+
+    context.lineWidth = opt.lineWidth || lineWidth;
+
+    // Draw lines
+    eachPath(inputs, function (feature) {
     context.beginPath();
 
     if (typeof feature === 'string') {
@@ -304,8 +319,11 @@ function renderPathsAndTextOnCanvas (inputs, texts, opt) {
 
     context.stroke();
   });
+  });
 
-  context.fillStyle = opt.background || 'black';
+  
+
+  context.fillStyle = globalOptions.background || 'black';
 
   for (let i = 0; i < texts.length; i++) {
     const el = texts[i];
