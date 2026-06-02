@@ -66,6 +66,10 @@ test('value', t => {
   ]);
 
   t.deepEqual(random.weighted([ 0, 100, 50 ]), 1);
+  // When rounding causes the cumulative walk to fall through, the last
+  // index should be returned rather than the first.
+  t.ok(random.weighted([ 1, 1, 1 ]) >= 0);
+  t.equal(random.weighted([ 0, 0, 1 ]), 2);
   t.deepEqual(random.weightedSet([
     { value: 'a', weight: 10000 },
     { value: 'b', weight: 100 },

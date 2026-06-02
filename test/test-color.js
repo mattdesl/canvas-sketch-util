@@ -148,5 +148,10 @@ test('should blend', t => {
   const layerBottom = color.blend('white', 'black', 0.5);
   t.deepEqual(color.blend(layerBottom, layerTop, 0.5).hex, '#b05050');
 
+  // Blending over a translucent background must un-premultiply by the
+  // resulting alpha (source-over), not leave premultiplied channels.
+  const overTranslucent = color.blend('rgba(255, 0, 0, 0.5)', 'blue', 0.5);
+  t.deepEqual(overTranslucent.rgba, [ 85, 0, 170, 0.75 ]);
+
   t.end();
 });
