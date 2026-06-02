@@ -122,6 +122,16 @@ test('should remove collinearity', t => {
     [ 1, 0 ]
   ]);
 
+  // A long run of evenly-spaced collinear points collapses to its endpoints
+  var longLine = [];
+  for (var x = 0; x <= 50; x++) longLine.push([ x, 0 ]);
+  t.deepEqual(geometry.removeCollinearPoints(longLine), [ [ 0, 0 ], [ 50, 0 ] ]);
+
+  // Short paths are returned unchanged
+  t.deepEqual(geometry.removeCollinearPoints([ [ 0, 0 ], [ 1, 1 ] ]), [ [ 0, 0 ], [ 1, 1 ] ]);
+  t.deepEqual(geometry.removeCollinearPoints([ [ 0, 0 ] ]), [ [ 0, 0 ] ]);
+  t.deepEqual(geometry.removeCollinearPoints([]), []);
+
   t.end();
 });
 

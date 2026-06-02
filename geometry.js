@@ -28,12 +28,20 @@ module.exports.removeDuplicatePoints = function (path) {
 };
 
 module.exports.removeCollinearPoints = function (path) {
+  // Single forward pass (O(n)). Equivalent to repeatedly testing the
+  // triple (anchor, mid, next) and dropping mid when it lies on the
+  // segment anchor->next, but without the O(n^2) splice/shift cost.
+  var points = clone(path);
+  var n = points.length;
+  if (n < 3) return points;
+
   var newPath = [];
-  var remainingPoints = clone(path);
-  while (remainingPoints.length >= 3) {
-    var p0 = remainingPoints[0];
-    var p1 = remainingPoints[1];
-    var p2 = remainingPoints[2];
+  var anchor = 0; // index of the current anchor point (always emitted)
+  var mid = 1; // index of the candidate midpoint to test/remove
+  while (n - mid >= 2) {
+    var p0 = points[anchor];
+    var p1 = points[mid];
+    var p2 = points[mid + 1];
     var collinear = module.exports.arePointsCollinear(p0, p1, p2);
     // one more check is to ensure that points are in a line:
     // A->B->C
@@ -44,20 +52,20 @@ module.exports.removeCollinearPoints = function (path) {
       if (distAB > distAC) collinear = false;
     }
     if (collinear) {
-      // the first 3 points are collinear
-      // remove the second point as it isn't needed
-      remainingPoints.splice(1, 1);
+      // the midpoint isn't needed, skip it and keep the same anchor
+      mid++;
     } else {
-      // the 3 points are not collinear
-      // add the first one as the others may still be collinear
-      for (var i = 0; i < 1; i++) {
-        newPath.push(remainingPoints.shift());
-      }
+      // the 3 points are not collinear; emit the anchor and advance,
+      // the midpoint becomes the new anchor as it may still be collinear
+      newPath.push(p0);
+      anchor = mid;
+      mid++;
     }
   }
-  // add any remaining points
-  while (remainingPoints.length) {
-    newPath.push(remainingPoints.shift());
+  // add any remaining points (the final anchor and trailing point)
+  newPath.push(points[anchor]);
+  for (var i = mid; i < n; i++) {
+    newPath.push(points[i]);
   }
   return newPath;
 };
