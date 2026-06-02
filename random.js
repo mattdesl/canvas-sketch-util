@@ -295,7 +295,8 @@ function createRandom (defaultSeed) {
       }
       random -= weights[i];
     }
-    return 0;
+    // Fall back to the last index in case of floating point rounding
+    return weights.length - 1;
   }
 
   function gaussian (mean, standardDerivation) {

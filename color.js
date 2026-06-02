@@ -48,10 +48,15 @@ module.exports.blend = function (background, foreground, opacity) {
     // foreground is opaque so no blend required
     return fg;
   }
+  // Source-over compositing with straight (non-premultiplied) alpha.
+  // The resulting color channels must be divided by the output alpha,
+  // otherwise the result is only correct when the background is opaque.
+  var outAlpha = alpha + c0[3] * (1 - alpha);
   for (var i = 0; i < 3; i++) {
-    c1[i] = c1[i] * alpha + c0[i] * (c0[3] * (1 - alpha));
+    var blended = c1[i] * alpha + c0[i] * (c0[3] * (1 - alpha));
+    c1[i] = outAlpha <= 0 ? 0 : blended / outAlpha;
   }
-  c1[3] = Math.max(0, Math.min(1, alpha + c0[3] * (1 - alpha)));
+  c1[3] = Math.max(0, Math.min(1, outAlpha));
   return module.exports.parse(c1); // re-parse to get new metadata
 };
 
