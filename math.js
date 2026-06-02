@@ -98,6 +98,9 @@ function linspace (n, opts) {
 }
 
 function lerpFrames (values, t, out) {
+  if (!Array.isArray(values) || values.length === 0) {
+    throw new TypeError('lerpFrames expected a non-empty array of values');
+  }
   t = clamp(t, 0, 1);
 
   var len = values.length - 1;
@@ -155,6 +158,9 @@ function damp (a, b, lambda, dt) {
 
 function dampArray (a, b, lambda, dt, out) {
   out = out || [];
+  if (a.length !== b.length) {
+    throw new TypeError('a and b array are expected to have the same length');
+  }
   for (var i = 0; i < a.length; i++) {
     out[i] = damp(a[i], b[i], lambda, dt);
   }

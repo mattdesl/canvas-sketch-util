@@ -92,6 +92,9 @@ test('lerps', t => {
   t.deepEqual(math.lerpFrames([ [ 0, 0 ], [ 0.25, 0.5 ], [ 10, 10 ] ], 0), [ 0, 0 ]);
   t.deepEqual(math.lerpFrames([ [ 0, 0 ], [ 5, 0.5 ], [ 10, 10 ] ], 0.75), [ 7.5, 5.25 ]);
   t.deepEqual(math.lerpFrames([ [ 0, 0 ], [ 5, 0.5 ], [ 10, 10 ] ], 1), [ 10, 10 ]);
+
+  t.throws(() => math.lerpFrames([], 0.5), 'throws on empty array');
+  t.throws(() => math.lerpFrames(null, 0.5), 'throws on non-array');
   t.end();
 });
 
@@ -119,6 +122,7 @@ test('damp', t => {
   const shared = [];
   t.strictEqual(math.dampArray([ 0.25, 0.5 ], [ 1, 1 ], 5, 0.2, shared), shared);
   t.deepEqual(shared.map(n => n.toFixed(2)), [ '0.72', '0.82' ]);
+  t.throws(() => math.dampArray([ 0, 0 ], [ 1 ], 5, 0.2), 'throws on length mismatch');
   t.end();
 });
 
