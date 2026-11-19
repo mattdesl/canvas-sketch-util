@@ -82,7 +82,7 @@ function pathsToSVG (inputs, opt) {
 }
 
 module.exports.groupsToSVG = groupsToSVG;
-function groupsToSVG (groups, options) {
+function groupsToSVG (groups, options, texts) {
   let globalOptions = options || {groups:true};
 
   var width = globalOptions.width;
@@ -108,6 +108,37 @@ function groupsToSVG (groups, options) {
   var viewHeight = convert(height, units, viewUnits, convertOptions).toString();
 
   let groupElements = [];
+  let textElements = [];
+
+  if (texts && texts.length > 0) {
+    texts.forEach(el => {
+      const x = convert(el.pos[0], units, viewUnits, convertOptions).toString();
+      const y = convert(el.pos[1], units, viewUnits, convertOptions).toString();
+      const fs = convert(el.fontsize, units, viewUnits, convertOptions).toString();
+      const textAttrs = toAttrList([
+        ['x', x],
+        ['y', y],
+        ['font-size', fs],
+        ['font-family', el.fontfamily || 'sans-serif'],
+        ['font-style', el.fontstyle || 'normal'],
+        ['font-weight', el.fontweight || (el.bold ? 'bold' : 'normal')],
+      ]);
+
+      textElements.push('  <text ' + textAttrs + '>' + el.text + '</text>');
+    });
+
+    var textGroupAttrs = toAttrList([
+      ['id', "0-text-layer"],
+      ['inkscape:groupmode', 'layer'], 
+      ['inkscape:label', "0-text-layer"]
+    ]);
+
+    groupElements.push([
+      '  <g ' + textGroupAttrs + '>',
+    textElements,
+    '  </g>',
+    ].join('\n'));
+  }
 
   groups.forEach((group, index) => {
     let opt = globalOptions;
@@ -119,7 +150,7 @@ function groupsToSVG (groups, options) {
     if (opt.groupoptions && opt.groupoptions.length > index && opt.groupoptions[index]) {
       opt = { ...globalOptions, ...opt.groupoptions[index]};
     }
-    
+
   
     // Convert all SVGPaths/paths/etc to polylines
     // This won't change their units so they are still in user space
@@ -188,7 +219,9 @@ function groupsToSVG (groups, options) {
       [ 'stroke', strokeStyle ],
       [ 'stroke-width', lineWidth + '' + units ],
       lineJoin ? [ 'stroke-linejoin', lineJoin ] : false,
-      lineCap ? [ 'stroke-linecap', lineCap ] : false
+      lineCap ? [ 'stroke-linecap', lineCap ] : false,
+      ['inkscape:groupmode', 'layer'], 
+      ['inkscape:label', groupId]
     ]);
 
     groupElements.push([
@@ -203,7 +236,12 @@ function groupsToSVG (groups, options) {
     '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" ',
     '    "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">',
     '<svg width="' + width + units + '" height="' + height + units + '"',
-    '    xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 ' + viewWidth + ' ' + viewHeight + '">',
+    '    xmlns="http://www.w3.org/2000/svg"',
+    '    xmlns:svg="http://www.w3.org/2000/svg"',
+    '    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"',
+    '    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"',
+    '    sodipodi:docname="drawing.svg"',
+    '    version="1.1" viewBox="0 0 ' + viewWidth + ' ' + viewHeight + '">',
     groupElements,
     '</svg>'
   ].join('\n');
@@ -236,7 +274,7 @@ function renderGroupsWithText (inputs, texts, opt) {
     renderGroupsAndTextOnCanvas(inputs, texts, opt),
     // Export SVG for pen plotter as second layer
     {
-      data: groupsToSVG(inputs, opt),
+      data: groupsToSVG(inputs, opt, texts),
       extension: '.svg'
     }
   ];
@@ -300,6 +338,11 @@ function renderGroupsAndTextOnCanvas (groups, texts, options) {
     if (opt.groupoptions && opt.groupoptions.length > index && opt.groupoptions[index]) {
       opt = { ...globalOptions, ...opt.groupoptions[index]};
     }
+    context.strokeStyle = opt.strokeStyle || globalOptions.foreground || globalOptions.strokeStyle || 'black'; 
+    let dashPattern = opt.dashPattern || globalOptions.dashPattern;
+    if (dashPattern) {
+      context.setLineDash(dashPattern)
+    }
 
     context.lineWidth = opt.lineWidth || lineWidth;
 
@@ -327,9 +370,15 @@ function renderGroupsAndTextOnCanvas (groups, texts, options) {
 
   for (let i = 0; i < texts.length; i++) {
     const el = texts[i];
-    context.font = el.fontsize + "px sans-serif";
+    const fontFamily = el.fontfamily || 'sans-serif';
+    const fontStyle = el.fontstyle ? el.fontstyle + ' ' : '';
+    const fontWeight = el.fontweight || (el.bold ? 'bold' : 'normal');
+    const fontWeightStr = fontWeight ? fontWeight + ' ' : '';
+    context.font = fontStyle + fontWeightStr + el.fontsize + "px " + fontFamily;
     context.textBaseline = "bottom";
-    context.fillText(" "+el.text, el.pos[0], el.pos[1]);  
+    el.text.split('\n').forEach((line, index) => {
+      context.fillText(line, el.pos[0], el.pos[1] + index * (el.fontsize+2));
+    });
   }
 
   return context.canvas;
