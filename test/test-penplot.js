@@ -84,6 +84,16 @@ test('should return a physical SVG', t => {
   t.end();
 });
 
+test('should preserve turns in optimized SVG paths', t => {
+  [ 2, 1e16 ].forEach(end => {
+    const path = [ [ 1, 0 ], [ 0, 0 ], [ end, 0 ] ];
+    const dimensions = { width: end, height: 5 };
+    const optimized = penplot.pathsToSVG([ path ], { ...dimensions, optimize: true });
+    t.equal(optimized, penplot.pathsToSVG([ path ], dimensions));
+  });
+  t.end();
+});
+
 test('discrete', t => {
   const str0 = 'M0 0L5 5';
   const path0 = penplot.createPath(context => context.lineTo(2, 5));

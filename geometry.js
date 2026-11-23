@@ -43,20 +43,24 @@ module.exports.removeCollinearPoints = function (path) {
     var p1 = points[mid];
     var p2 = points[mid + 1];
     var collinear = module.exports.arePointsCollinear(p0, p1, p2);
-    // one more check is to ensure that points are in a line:
-    // A->B->C
-    // not A->C->B or some variant
     if (collinear) {
-      var distAB = squaredDistance(p0, p1);
-      var distAC = squaredDistance(p0, p2);
-      if (distAB > distAC) collinear = false;
+      // Compare coordinates along the longest axis before comparing distances.
+      // This preserves turns even when squared distances lose precision.
+      var xSpan = Math.max(Math.abs(p1[0] - p0[0]), Math.abs(p2[0] - p0[0]));
+      var ySpan = Math.max(Math.abs(p1[1] - p0[1]), Math.abs(p2[1] - p0[1]));
+      var axis = xSpan >= ySpan ? 0 : 1;
+      var min = Math.min(p0[axis], p2[axis]);
+      var max = Math.max(p0[axis], p2[axis]);
+      var endpointDistance = squaredDistance(p0, p2);
+      collinear = p1[axis] >= min && p1[axis] <= max &&
+        squaredDistance(p0, p1) <= endpointDistance &&
+        squaredDistance(p1, p2) <= endpointDistance;
     }
     if (collinear) {
       // the midpoint isn't needed, skip it and keep the same anchor
       mid++;
     } else {
-      // the 3 points are not collinear; emit the anchor and advance,
-      // the midpoint becomes the new anchor as it may still be collinear
+      // Emit the anchor and advance to the next triple.
       newPath.push(p0);
       anchor = mid;
       mid++;

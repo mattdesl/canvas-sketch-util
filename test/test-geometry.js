@@ -135,6 +135,27 @@ test('should remove collinearity', t => {
   t.end();
 });
 
+test('should preserve collinear turns at different coordinate scales', t => {
+  [ 1, 1e-170, 1e155 ].forEach(scale => {
+    const turn = [ [ 0, 0 ], [ -scale, 0 ], [ 2 * scale, 0 ] ];
+    const repeated = [ turn[0], turn[0], turn[1], turn[1], turn[2] ];
+    const straight = [ [ -scale, 0 ], [ 0, 0 ], [ scale, 0 ] ];
+    t.deepEqual(geometry.removeCollinearPoints(repeated), turn);
+    t.deepEqual(geometry.removeCollinearPoints(straight), [ straight[0], straight[2] ]);
+  });
+  const retraced = [ [ 0, 0 ], [ 0, 1e-170 ], [ 0, 0 ] ];
+  t.deepEqual(geometry.removeCollinearPoints(retraced), retraced);
+  t.end();
+});
+
+test('should simplify small perpendicular deviations on an otherwise straight path', t => {
+  const horizontal = [ [ 0, 0 ], [ 0.5, 1e-17 ], [ 1, 0 ] ];
+  const vertical = [ [ 0, 0 ], [ -1e-17, 0.5 ], [ 0, 1 ] ];
+  t.deepEqual(geometry.removeCollinearPoints(horizontal), [ horizontal[0], horizontal[2] ]);
+  t.deepEqual(geometry.removeCollinearPoints(vertical), [ vertical[0], vertical[2] ]);
+  t.end();
+});
+
 test('should clip lines with border', t => {
   const lines = [
     [ [ 0, 0 ], [ 1, 1 ], [ 1.5, 1.5 ], [ 0, 1.5 ] ]
